@@ -1,0 +1,8 @@
+{
+  "name": "talent-hive-monorepo",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+}

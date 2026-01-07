@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  RECRUITER
+  HIRING_MANAGER
+  CANDIDATE
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ApplicationStatus {
+  NEW
+  SCREENING
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+// Models
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed
+  firstName String
+  lastName  String
+  role      Role     @default(CANDIDATE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  jobsManaged      Job[]         @relation("JobManager")
+  applications     Application[] // If user is a candidate
+}
+
+model Job {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  status      JobStatus @default(DRAFT)
+  location    String?
+  salaryRange String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  hiringManagerId String
+  hiringManager   User          @relation("JobManager", fields: [hiringManagerId], references: [id])
+  applications    Application[]
+}
+
+model Candidate {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  fullName  String
+  phone     String?
+  cvUrl     String?  // Path to file
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  applications Application[]
+}
+
+model Application {
+  id        String            @id @default(uuid())
+  status    ApplicationStatus @default(NEW)
+  score     Int?              // 1-5 rating
+  notes     String?
+  
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  // Relations
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id])
+  
+  // Link to a registered user OR a raw candidate profile?
+  // For simplicity, let's link to Candidate entity
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  
+  // Optional: link to User account if they registered
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+}
