@@ -1,0 +1,70 @@
+version: "3.8"
+
+services:
+  talenthive-postgres:
+    image: postgres:latest
+    container_name: talenthive-postgres
+    environment:
+      POSTGRES_USER: tony
+      POSTGRES_PASSWORD: mysecret
+      POSTGRES_DB: talent_hive
+    ports:
+      - "5432:5432" # Porta esterna 5433 per evitare conflitti
+    volumes:
+      - talenthive_postgres_data:/var/lib/postgresql/data
+    networks:
+      - talenthive-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tony"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  talenthive-minio:
+    image: minio/minio:latest
+    container_name: talenthive-minio
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Console UI
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - talenthive_minio_data:/data
+    networks:
+      - talenthive-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  talenthive-minio-init:
+    image: minio/mc:latest
+    container_name: talenthive-minio-init
+    depends_on:
+      talenthive-minio:
+        condition: service_healthy
+    networks:
+      - talenthive-network
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set myminio http://talenthive-minio:9000 minioadmin minioadmin;
+      mc mb myminio/talenthive-cvs --ignore-existing;
+      mc anonymous set download myminio/talenthive-cvs;
+      echo '✅ Bucket talenthive-cvs created successfully';
+      exit 0;
+      "
+
+networks:
+  talenthive-network:
+    name: talenthive-network
+    driver: bridge
+
+volumes:
+  talenthive_postgres_data:
+    name: talenthive_postgres_data
+  talenthive_minio_data:
+    name: talenthive_minio_data
