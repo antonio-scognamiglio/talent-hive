@@ -1,11 +1,11 @@
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { hashPassword, verifyPassword } from "../utils/hash.util";
 import { signJwtCookie, type JwtPayload } from "../utils/jwt.util";
+import type { UserWithoutPassword } from "../types/user.types";
 
 const prisma = new PrismaClient();
 
-// Utility Types (più type-safe!)
-export type UserWithoutPassword = Omit<User, "password">;
+export type { UserWithoutPassword };
 
 export interface LoginDto {
   email: string;
@@ -17,7 +17,7 @@ export interface RegisterDto {
   password: string;
   firstName: string;
   lastName: string;
-  role?: "ADMIN" | "RECRUITER" | "HIRING_MANAGER" | "CANDIDATE";
+  role?: "ADMIN" | "RECRUITER" | "CANDIDATE";
 }
 
 export interface AuthResponse {
