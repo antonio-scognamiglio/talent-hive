@@ -14,7 +14,6 @@ datasource db {
 enum Role {
   ADMIN
   RECRUITER
-  HIRING_MANAGER
   CANDIDATE
 }
 
@@ -24,11 +23,15 @@ enum JobStatus {
   ARCHIVED
 }
 
-enum ApplicationStatus {
+enum WorkflowStatus {
   NEW
   SCREENING
   INTERVIEW
   OFFER
+  DONE
+}
+
+enum FinalDecision {
   HIRED
   REJECTED
 }
@@ -46,60 +49,46 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  jobsManaged      Job[]         @relation("JobManager")
-  applications     Application[] // If user is a candidate
+  jobsCreated  Job[]         @relation("JobCreator")
+  applications Application[]
 }
 
 model Job {
   id          String    @id @default(uuid())
   title       String
-  description String
+  description String    @db.Text
   status      JobStatus @default(DRAFT)
   location    String?
   salaryRange String?
   
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  // Relations
-  hiringManagerId String
-  hiringManager   User          @relation("JobManager", fields: [hiringManagerId], references: [id])
-  applications    Application[]
+  // Ownership: who created this job
+  createdById String
+  createdBy   User          @relation("JobCreator", fields: [createdById], references: [id])
+  applications Application[]
 }
 
-model Candidate {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  fullName  String
-  phone     String?
-  cvUrl     String?  // Path to file
+model Application {
+  id             String         @id @default(uuid())
+  workflowStatus WorkflowStatus @default(NEW)
+  finalDecision  FinalDecision?
+  
+  cvUrl       String
+  coverLetter String?       @db.Text
+  score       Int?              // 1-5 rating
+  notes       String?           @db.Text
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  applications Application[]
-}
-
-model Application {
-  id        String            @id @default(uuid())
-  status    ApplicationStatus @default(NEW)
-  score     Int?              // 1-5 rating
-  notes     String?
+  jobId  String
+  job    Job    @relation(fields: [jobId], references: [id])
   
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-
-  // Relations
-  jobId       String
-  job         Job       @relation(fields: [jobId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
   
-  // Link to a registered user OR a raw candidate profile?
-  // For simplicity, let's link to Candidate entity
-  candidateId String
-  candidate   Candidate @relation(fields: [candidateId], references: [id])
-  
-  // Optional: link to User account if they registered
-  userId      String?
-  user        User?     @relation(fields: [userId], references: [id])
+  @@unique([jobId, userId])
 }

@@ -1,0 +1,181 @@
+### TalentHive API Tests
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### Health Check
+GET {{baseUrl}}/health
+
+### ============================================================================
+### AUTH - Get Cookies
+### ============================================================================
+
+### Login as CANDIDATE (Mario)
+# @name loginCandidate
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "mario@example.com",
+  "password": "Mario123!"
+}
+
+### Login as RECRUITER (Sara)
+# @name loginRecruiter
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "sara@talenthive.com",
+  "password": "Sara123!"
+}
+
+### Login as ADMIN
+# @name loginAdmin
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@talenthive.com",
+  "password": "Admin123!"
+}
+
+### ============================================================================
+### JOBS API - List (POST /api/jobs/list)
+### ============================================================================
+
+### Get ALL jobs (as Sara - RECRUITER)
+# Sara dovrebbe vedere tutti i job (DRAFT, PUBLISHED, ARCHIVED)
+POST {{baseUrl}}/api/jobs/list
+Content-Type: {{contentType}}
+Cookie: accessToken={{loginRecruiter.response.headers.Set-Cookie}}
+
+{
+  "skip": 0,
+  "take": 10
+}
+
+### Get PUBLISHED jobs only (as Mario - CANDIDATE)
+# Mario dovrebbe vedere SOLO job PUBLISHED
+POST {{baseUrl}}/api/jobs/list
+Content-Type: {{contentType}}
+Cookie: accessToken={{loginCandidate.response.headers.Set-Cookie}}
+
+{
+  "skip": 0,
+  "take": 10
+}
+
+### Search jobs by title (as RECRUITER)
+POST {{baseUrl}}/api/jobs/list
+Content-Type: {{contentType}}
+Cookie: accessToken={{loginRecruiter.response.headers.Set-Cookie}}
+
+{
+  "skip": 0,
+  "take": 10,
+  "where": {
+    "title": {
+      "contains": "react",
+      "mode": "insensitive"
+    }
+  }
+}
+
+### Filter by location (as CANDIDATE)
+POST {{baseUrl}}/api/jobs/list
+Content-Type: {{contentType}}
+Cookie: accessToken={{loginCandidate.response.headers.Set-Cookie}}
+
+{
+  "skip": 0,
+  "take": 10,
+  "where": {
+    "location": {
+      "contains": "milan",
+      "mode": "insensitive"
+    }
+  }
+}
+
+### Filter by status DRAFT (as RECRUITER - should work)
+POST {{baseUrl}}/api/jobs/list
+Content-Type: {{contentType}}
+Cookie: accessToken={{loginRecruiter.response.headers.Set-Cookie}}
+
+{
+  "skip": 0,
+  "take": 10,
+  "where": {
+    "status": "DRAFT"
+  }
+}
+
+### Try to filter by DRAFT as CANDIDATE (should be overridden to PUBLISHED)
+POST {{baseUrl}}/api/jobs/list
+Content-Type: {{contentType}}
+Cookie: accessToken={{loginCandidate.response.headers.Set-Cookie}}
+
+{
+  "skip": 0,
+  "take": 10,
+  "where": {
+    "status": "DRAFT"
+  }
+}
+
+### ============================================================================
+### JOBS API - Get by ID
+### ============================================================================
+
+### Get job by ID (PUBLISHED - as CANDIDATE)
+# Usa l'ID di un job PUBLISHED dal seed
+GET {{baseUrl}}/api/jobs/<JOB_ID_HERE>
+Cookie: accessToken={{loginCandidate.response.headers.Set-Cookie}}
+
+### ============================================================================
+### JOBS API - Create (POST)
+### ============================================================================
+
+### Create new job (as RECRUITER)
+POST {{baseUrl}}/api/jobs
+Content-Type: {{contentType}}
+Cookie: accessToken={{loginRecruiter.response.headers.Set-Cookie}}
+
+{
+  "title": "Frontend Developer",
+  "description": "Looking for a skilled frontend developer with React experience",
+  "location": "Remote",
+  "salaryRange": "€40k-€60k"
+}
+
+### Try to create job as CANDIDATE (should fail)
+POST {{baseUrl}}/api/jobs
+Content-Type: {{contentType}}
+Cookie: accessToken={{loginCandidate.response.headers.Set-Cookie}}
+
+{
+  "title": "Test Job",
+  "description": "This should fail"
+}
+
+### ============================================================================
+### JOBS API - Update (PATCH)
+### ============================================================================
+
+### Update job (as owner RECRUITER)
+PATCH {{baseUrl}}/api/jobs/<JOB_ID_CREATED_BY_SARA>
+Content-Type: {{contentType}}
+Cookie: accessToken={{loginRecruiter.response.headers.Set-Cookie}}
+
+{
+  "title": "Senior React Developer (Updated)",
+  "status": "PUBLISHED"
+}
+
+### ============================================================================
+### JOBS API - Archive (DELETE)
+### ============================================================================
+
+### Archive job (as owner)
+DELETE {{baseUrl}}/api/jobs/<JOB_ID_HERE>
+Cookie: accessToken={{loginRecruiter.response.headers.Set-Cookie}}
