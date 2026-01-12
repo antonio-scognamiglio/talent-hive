@@ -1,7 +1,7 @@
 import { prisma } from "../libs/prisma";
 import type { Job, JobStatus } from "@prisma/client";
 import type { TransactionResult, PaginationParams } from "../types/api.types";
-import type { UserWithoutPassword } from "../types/user.types";
+import type { UserWithoutPassword } from "./auth.service";
 
 // DTO types
 export type CreateJobDto = {

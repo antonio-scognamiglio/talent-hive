@@ -1,5 +1,9 @@
 import { Router, Request, Response } from "express";
 import { authService } from "../services/auth.service";
+import {
+  authMiddleware,
+  type AuthRequest,
+} from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -24,10 +28,10 @@ router.post("/login", async (req: Request, res: Response) => {
     // Setta cookie httpOnly
     res.setHeader("Set-Cookie", result.cookie);
 
-    // Risposta
+    // Risposta - SOLO conferma login (come lex-nexus)
+    // User data viene ottenuto tramite GET /auth/me
     return res.status(200).json({
-      user: result.user,
-      expiresAt: result.expiresAt,
+      message: "Login effettuato con successo",
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -71,10 +75,9 @@ router.post("/register", async (req: Request, res: Response) => {
     // Setta cookie httpOnly (auto-login)
     res.setHeader("Set-Cookie", result.cookie);
 
-    // Risposta
+    // Risposta - SOLO conferma registrazione
     return res.status(201).json({
-      user: result.user,
-      expiresAt: result.expiresAt,
+      message: "Registrazione effettuata con successo",
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -86,6 +89,56 @@ router.post("/register", async (req: Request, res: Response) => {
     });
   }
 });
+
+/**
+ * GET /api/auth/me
+ * Ottiene dati utente autenticato dal cookie
+ */
+router.get("/me", authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Non autenticato" });
+    }
+
+    return res.status(200).json(req.user);
+  } catch (error) {
+    console.error("Get me error:", error);
+    return res.status(500).json({
+      error: "Errore nel recupero dei dati utente",
+    });
+  }
+});
+
+/**
+ * POST /api/auth/refresh
+ * Rinnova il token se valido
+ */
+router.post(
+  "/refresh",
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Non autenticato" });
+      }
+
+      const result = await authService.refresh(req.user.id);
+
+      // Setta nuovo cookie
+      res.setHeader("Set-Cookie", result.cookie);
+
+      return res.status(200).json({
+        message: "Sessione rinnovata",
+        expiresAt: result.expiresAt,
+      });
+    } catch (error) {
+      console.error("Refresh error:", error);
+      return res.status(401).json({
+        error: "Impossibile rinnovare la sessione",
+      });
+    }
+  }
+);
 
 /**
  * POST /api/auth/logout
