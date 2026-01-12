@@ -58,42 +58,22 @@ const DefaultAccessDenied: React.FC = () => (
 /**
  * Protected Route Component
  * Guard per proteggere rotte che richiedono autenticazione e autorizzazione
- *
- * Comportamento (pattern uniformato):
- * - Se currentUserRole esiste (anche durante check) → controlla permessi o mostra children
- * - Se non autenticato E non in check → redirect a authRedirectPath
- * - Altrimenti (solo durante check senza ruolo) → mostra loading
- *
- * @example
- * <ProtectedRoute
- *   allowedRoles={["admin", "user"]}
- *   currentUserRole={user?.role}
- *   isCheckingAuth={isCheckingAuth}
- * >
- *   <AdminPanel />
- * </ProtectedRoute>
  */
 export function ProtectedRoute<TRole extends string>({
   children,
   allowedRoles,
   currentUserRole,
   isCheckingAuth,
-  authRedirectPath = "/auth",
+  authRedirectPath = "/auth/login",
   onLoading,
   onAccessDenied,
 }: ProtectedRouteProps<TRole>) {
-  // Pattern uniformato con RoleBasedRouter:
-  // 1. Se non autenticato E non in check → redirect
-  // 2. Se non autenticato E in check → loading
-  // 3. Altrimenti (autenticato) → controlla permessi o mostra children
-
   // Se non autenticato e non in check, redirect al path di login
   if (!currentUserRole && !isCheckingAuth) {
     return <Navigate to={authRedirectPath} replace />;
   }
 
   // Loading solo se stiamo ancora controllando E non abbiamo ancora un ruolo
-  // (caso tipico: primo accesso alla pagina o refresh)
   if (!currentUserRole && isCheckingAuth) {
     return onLoading ? onLoading() : <AuthLoadingFallback />;
   }
