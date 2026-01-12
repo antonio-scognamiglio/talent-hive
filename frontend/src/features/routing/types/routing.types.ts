@@ -1,5 +1,6 @@
-import type { ComponentType, LazyExoticComponent } from "react";
+import type { ComponentType, LazyExoticComponent, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import type { User } from "@shared/types/index";
 
 /**
  * Route Configuration
@@ -101,4 +102,40 @@ export interface NavigationMenuItem {
   badgeCount?: () => number;
   /** Funzione che ritorna se c'è un timer attivo (opzionale) */
   hasActiveTimer?: () => boolean;
+}
+
+/**
+ * Sidebar Layout Configuration
+ */
+export interface SidebarLayoutConfig {
+  title?: string;
+  showSidebar?: boolean;
+  sidebarWidth?: string;
+  showTopbar?: boolean;
+  showUserMenuInSidebar?: boolean;
+  showUserMenuInTopbar?: boolean;
+  logo?: ReactNode;
+}
+
+/**
+ * User Menu Props
+ */
+/**
+ * User Menu Props
+ */
+export interface UserMenuProps {
+  // User/Logout gestiti internamente dal componente o passati se necessario
+  user?: User | null;
+  onLogout?: () => void;
+
+  // Props di presentazione
+  variant?: string;
+  avatarDisplay?: string;
+  subtitleContent?: string;
+  dropdownSide?: string;
+  dropdownAlign?: string;
+  showSettings?: boolean;
+  showProfile?: boolean;
+  showName?: boolean;
+  showSubtitle?: boolean;
 }

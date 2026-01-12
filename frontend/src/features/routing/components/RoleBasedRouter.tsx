@@ -2,8 +2,7 @@ import { Suspense, useMemo } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { LoadingFallback } from "./LoadingFallback";
-import { getRoutesForRole } from "../utils";
-import NotFound from "@/pages/not-found/NotFound";
+import { getRoutesForRole } from "../utils/route-helpers";
 import type { RouteGroup, RouteConfig } from "../types";
 
 /**
@@ -44,32 +43,6 @@ interface RoleBasedRouterProps<TRole extends string, TUser> {
 /**
  * Role Based Router Component
  * Router principale che genera dinamicamente le rotte in base al ruolo dell'utente
- *
- * Funzionamento:
- * 1. Filtra le rotte accessibili per il ruolo corrente
- * 2. Genera le Route components dinamicamente
- * 3. Applica ProtectedRoute guard a tutte le rotte
- * 4. Applica layout tramite layoutWrapper se specificato
- * 5. Gestisce redirect se non autenticato
- *
- * Vantaggi:
- * - Zero rotte hardcoded
- * - Aggiungere rotta = solo modifica routeGroups
- * - Type-safe con TypeScript
- * - Performance: solo rotte autorizzate vengono caricate
- *
- * @example
- * <RoleBasedRouter
- *   user={user}
- *   userRole={userRole}
- *   isCheckingAuth={isCheckingAuth}
- *   routeGroups={ROUTE_GROUPS}
- *   layoutWrapper={(children, route) => (
- *     <SidebarLayout config={LAYOUT_CONFIG}>
- *       {children}
- *     </SidebarLayout>
- *   )}
- * />
  */
 export function RoleBasedRouter<TRole extends string, TUser>({
   user,
@@ -77,7 +50,7 @@ export function RoleBasedRouter<TRole extends string, TUser>({
   isCheckingAuth,
   routeGroups,
   layoutWrapper,
-  authRedirectPath = "/auth",
+  authRedirectPath = "/auth/login",
   loadingFallback,
   accessDeniedFallback,
   authLoadingFallback,
@@ -87,25 +60,16 @@ export function RoleBasedRouter<TRole extends string, TUser>({
     return getRoutesForRole(routeGroups, userRole);
   }, [routeGroups, userRole]);
 
-  // Pattern uniformato con GuestRoute e ProtectedRoute:
-  // 1. Se autenticato (anche durante check) → procedi a generare rotte immediatamente
-  //    Se sei autenticato, probabilmente sto refreshando il token in background,
-  //    ma abbiamo già i dati utente validati, quindi procedi
-  // 2. Se non autenticato E non in check → redirect
-  // 3. Loading solo se stiamo ancora controllando E non abbiamo ancora un utente
-
   // Se non autenticato e non in check, redirect
   if (!user && !isCheckingAuth) {
     return <Navigate to={authRedirectPath} replace />;
   }
 
   // Loading solo se stiamo ancora controllando E non abbiamo ancora un utente
-  // (caso tipico: primo accesso alla pagina o refresh)
   if (!user && isCheckingAuth) {
     return authLoadingFallback || <LoadingFallback />;
   }
 
-  // Se arriviamo qui, significa che user esiste → generiamo le rotte
   return (
     <Suspense fallback={loadingFallback || <LoadingFallback />}>
       <Routes>
@@ -143,9 +107,7 @@ export function RoleBasedRouter<TRole extends string, TUser>({
             />
           );
         })}
-
-        {/* Catch-all: mostra NotFound per rotte non trovate */}
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<div>Not Found</div>} />
       </Routes>
     </Suspense>
   );

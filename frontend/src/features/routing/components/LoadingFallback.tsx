@@ -1,4 +1,4 @@
-import { Logo } from "@/features/shared/components/Logo";
+import { Loader2 } from "lucide-react";
 
 /**
  * Loading Fallback Component
@@ -7,8 +7,21 @@ import { Logo } from "@/features/shared/components/Logo";
 export const LoadingFallback: React.FC = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="text-center">
-      <Logo size={48} className="mx-auto mb-4 animate-pulse" />
+      <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary" />
       <p className="text-lg text-muted-foreground">Caricamento...</p>
+    </div>
+  </div>
+);
+
+/**
+ * Auth Loading Fallback
+ * Loading specifico per il check dell'autenticazione
+ */
+export const AuthLoadingFallback: React.FC = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="text-center">
+      <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary" />
+      <p className="text-lg font-medium">Verifica autenticazione...</p>
     </div>
   </div>
 );
@@ -20,21 +33,8 @@ export const LoadingFallback: React.FC = () => (
 export const CompactLoadingFallback: React.FC = () => (
   <div className="flex items-center justify-center h-full w-full">
     <div className="text-center">
-      <Logo size={32} className="mx-auto mb-2 animate-pulse" />
+      <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-primary" />
       <p className="text-sm text-muted-foreground">Caricamento...</p>
-    </div>
-  </div>
-);
-
-/**
- * Auth Loading Fallback
- * Loading specifico per il check dell'autenticazione
- */
-export const AuthLoadingFallback: React.FC = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-background">
-    <div className="text-center text-foreground">
-      <Logo size={48} className="mx-auto mb-4 animate-pulse" />
-      <p className="text-lg font-medium">Verifica autenticazione...</p>
     </div>
   </div>
 );
