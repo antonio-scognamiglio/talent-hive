@@ -1,0 +1,154 @@
+/* 
+ * Classi di width personalizzate per tera-lib
+ * Scala da 0.5 a 12 in multipli di 0.5
+ * 12 rappresenta il 100%
+ * Prefisso 'tl-' Tera-Library
+ */
+
+/* Width classes senza punti */
+.tl-w-05 {
+  width: 4.17%;
+}
+.tl-w-1 {
+  width: 8.33%;
+}
+.tl-w-15 {
+  width: 12.5%;
+}
+.tl-w-2 {
+  width: 16.67%;
+}
+.tl-w-25 {
+  width: 20.83%;
+}
+.tl-w-3 {
+  width: 25%;
+}
+.tl-w-35 {
+  width: 29.17%;
+}
+.tl-w-4 {
+  width: 33.33%;
+}
+.tl-w-45 {
+  width: 37.5%;
+}
+.tl-w-5 {
+  width: 41.67%;
+}
+.tl-w-55 {
+  width: 45.83%;
+}
+.tl-w-6 {
+  width: 50%;
+}
+.tl-w-65 {
+  width: 54.17%;
+}
+.tl-w-7 {
+  width: 58.33%;
+}
+.tl-w-75 {
+  width: 62.5%;
+}
+.tl-w-8 {
+  width: 66.67%;
+}
+.tl-w-85 {
+  width: 70.83%;
+}
+.tl-w-9 {
+  width: 75%;
+}
+.tl-w-95 {
+  width: 79.17%;
+}
+.tl-w-10 {
+  width: 83.33%;
+}
+.tl-w-105 {
+  width: 87.5%;
+}
+.tl-w-11 {
+  width: 91.67%;
+}
+.tl-w-115 {
+  width: 95.83%;
+}
+.tl-w-12 {
+  width: 100%;
+}
+
+/* Col-span classes per grid layout */
+.tl-col-span-05 {
+  grid-column: span 0.5 / span 0.5;
+}
+.tl-col-span-1 {
+  grid-column: span 1 / span 1;
+}
+.tl-col-span-15 {
+  grid-column: span 1.5 / span 1.5;
+}
+.tl-col-span-2 {
+  grid-column: span 2 / span 2;
+}
+.tl-col-span-25 {
+  grid-column: span 2.5 / span 2.5;
+}
+.tl-col-span-3 {
+  grid-column: span 3 / span 3;
+}
+.tl-col-span-35 {
+  grid-column: span 3.5 / span 3.5;
+}
+.tl-col-span-4 {
+  grid-column: span 4 / span 4;
+}
+.tl-col-span-45 {
+  grid-column: span 4.5 / span 4.5;
+}
+.tl-col-span-5 {
+  grid-column: span 5 / span 5;
+}
+.tl-col-span-55 {
+  grid-column: span 5.5 / span 5.5;
+}
+.tl-col-span-6 {
+  grid-column: span 6 / span 6;
+}
+.tl-col-span-65 {
+  grid-column: span 6.5 / span 6.5;
+}
+.tl-col-span-7 {
+  grid-column: span 7 / span 7;
+}
+.tl-col-span-75 {
+  grid-column: span 7.5 / span 7.5;
+}
+.tl-col-span-8 {
+  grid-column: span 8 / span 8;
+}
+.tl-col-span-85 {
+  grid-column: span 8.5 / span 8.5;
+}
+.tl-col-span-9 {
+  grid-column: span 9 / span 9;
+}
+.tl-col-span-95 {
+  grid-column: span 9.5 / span 9.5;
+}
+.tl-col-span-10 {
+  grid-column: span 10 / span 10;
+}
+.tl-col-span-105 {
+  grid-column: span 10.5 / span 10.5;
+}
+.tl-col-span-11 {
+  grid-column: span 11 / span 11;
+}
+.tl-col-span-115 {
+  grid-column: span 11.5 / span 11.5;
+}
+.tl-col-span-12 {
+  grid-column: span 12 / span 12;
+}
