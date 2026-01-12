@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import jobRoutes from "./routes/job.routes";
+import applicationRoutes from "./routes/application.routes";
 import { config } from "./config/config";
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(cookieParser()); // Parse cookies
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/applications", applicationRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date() });
