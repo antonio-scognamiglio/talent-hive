@@ -1,19 +1,26 @@
-import type { UserRole } from "./roles";
+/**
+ * Auth Me Types
+ *
+ * Uses shared types from backend
+ */
 
-export interface AuthMeResponseDto {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
+import type { User } from "@shared/types/index";
+
+// Frontend DTO for authenticated user (no password)
+export type AuthMeResponseDto = Omit<User, "password">;
+
+export function isAdmin(user: AuthMeResponseDto | null | undefined): boolean {
+  return user?.role === "ADMIN";
 }
 
-// Helpers che erano usati nel hook (mocked per ora o implementati)
-export const isAuthMeAdmin = (user: AuthMeResponseDto | null) => user?.role === "ADMIN";
-export const isAuthMeRecruiter = (user: AuthMeResponseDto | null) => user?.role === "RECRUITER";
-export const isAuthMeCandidate = (user: AuthMeResponseDto | null) => user?.role === "CANDIDATE";
-export const isAuthMeHiringManager = (user: AuthMeResponseDto | null) => user?.role === "HIRING_MANAGER";
+export function isRecruiter(
+  user: AuthMeResponseDto | null | undefined
+): boolean {
+  return user?.role === "RECRUITER";
+}
 
-// Legacy helpers from Lex Nexus to match imports in useSidebarBadgeCount
-export const isAuthMeLawyer = () => false;
-export const isAuthMeEmployee = () => false;
+export function isCandidate(
+  user: AuthMeResponseDto | null | undefined
+): boolean {
+  return user?.role === "CANDIDATE";
+}
