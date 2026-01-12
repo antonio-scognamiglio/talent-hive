@@ -1,4 +1,9 @@
-import type { RouteConfig, RouteGroup, SidebarItem } from "../types";
+import type {
+  LayoutType,
+  RouteConfig,
+  RouteGroup,
+  SidebarItem,
+} from "../types";
 
 /**
  * Ottiene tutte le rotte accessibili per un determinato ruolo
@@ -11,10 +16,17 @@ export function getRoutesForRole<TRole extends string>(
   userRole: TRole
 ): RouteConfig<TRole>[] {
   return routeGroups
-    .filter((group) => group.allowedRoles.includes(userRole))
+    .filter((group) => {
+      // Se allowedRoles è null, il gruppo è pubblico
+      if (!group.allowedRoles) return true;
+      // Altrimenti controlla se l'utente ha il ruolo
+      return group.allowedRoles.includes(userRole);
+    })
     .flatMap((group) => group.routes)
     .filter((route) => {
-      // Controlla se il ruolo è autorizzato
+      // Se allowedRoles è null, la rotta è pubblica
+      if (!route.allowedRoles) return true;
+      // Altrimenti controlla se l'utente ha il ruolo
       return route.allowedRoles.includes(userRole);
     });
 }
@@ -53,7 +65,10 @@ export function canAccessRoute<TRole extends string>(
   route: RouteConfig<TRole>,
   userRole: TRole
 ): boolean {
-  return route.allowedRoles.includes(userRole);
+  if (route.allowedRoles) {
+    return route.allowedRoles.includes(userRole);
+  }
+  return true;
 }
 
 /**
@@ -112,7 +127,7 @@ export function getRouteTitle<TRole extends string>(
  */
 export function filterRoutesByLayout<TRole extends string>(
   routes: RouteConfig<TRole>[],
-  layout: "sidebar" | "navbar" | "minimal" | null
+  layout: LayoutType
 ): RouteConfig<TRole>[] {
   return routes.filter((route) => route.layout === layout);
 }
@@ -127,13 +142,13 @@ export function groupRoutesByLayout<TRole extends string>(
 ): {
   sidebar: RouteConfig<TRole>[];
   navbar: RouteConfig<TRole>[];
-  minimal: RouteConfig<TRole>[];
+  guest: RouteConfig<TRole>[];
   none: RouteConfig<TRole>[];
 } {
   return {
     sidebar: filterRoutesByLayout(routes, "sidebar"),
     navbar: filterRoutesByLayout(routes, "navbar"),
-    minimal: filterRoutesByLayout(routes, "minimal"),
+    guest: filterRoutesByLayout(routes, "guest"),
     none: filterRoutesByLayout(routes, null),
   };
 }

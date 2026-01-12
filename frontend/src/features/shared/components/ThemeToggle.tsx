@@ -16,8 +16,9 @@ export function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Evita hydration mismatch
+  // Evita hydration mismatch - questo pattern è necessario per next-themes
   useEffect(() => {
+    // eslint-disable-next-line
     setMounted(true);
   }, []);
 
