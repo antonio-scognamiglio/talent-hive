@@ -9,6 +9,12 @@ interface GuestRouteProps {
   onLoading?: () => React.ReactNode;
 }
 
+/**
+ * GuestRoute Component
+ * Renders children only if the user is NOT authenticated.
+ * If the user is authenticated, they are redirected to the `redirectPath` (default: "/").
+ * Used for pages like Login, Register, etc.
+ */
 export function GuestRoute({
   children,
   redirectPath = "/",

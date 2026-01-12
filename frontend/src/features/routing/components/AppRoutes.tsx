@@ -1,15 +1,15 @@
 import { useMemo, useCallback, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
-import { RoleBasedRouter, GuestRoute } from "@/features/routing/components";
+import { RoleBasedRouter } from "@/features/routing/components";
 import { SidebarLayout } from "@/features/routing/layouts/SidebarLayout";
+import { GuestLayout } from "@/features/routing/layouts/GuestLayout";
 import { CompactLoadingFallback } from "@/features/routing/components/LoadingFallback";
 import { ROUTE_GROUPS } from "@/features/shared/config/routes.config";
 import { getLayoutConfig } from "@/features/shared/config/layout.config";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 import { useIsMobile } from "@/features/shared/hooks/useIsMobile";
 import { ThemeToggle } from "@/features/shared/components/ThemeToggle";
-import type { RouteConfig } from "@/features/routing/types";
-import LoginPage from "@/pages/auth/LoginPage";
+
+import type { RouteLayoutContext } from "@/features/routing/types";
 import { getRoutesForRole } from "@/features/routing/utils/route-helpers";
 
 /**
@@ -19,7 +19,7 @@ import { getRoutesForRole } from "@/features/routing/utils/route-helpers";
  * Responsabilità:
  * - Filtrare le rotte in base al ruolo utente
  * - Configurare il layout (sidebar/topbar) in base al ruolo e device
- * - Gestire il layoutWrapper per applicare SidebarLayout alle rotte protette
+ * - Gestire il layoutWrapper per applicare SidebarLayout/GuestLayout alle rotte
  * - Separare rotte pubbliche (login) da quelle protette
  */
 export function AppRoutes() {
@@ -51,7 +51,7 @@ export function AppRoutes() {
 
   // Memoizza layoutWrapper per evitare re-render infiniti
   const layoutWrapper = useCallback(
-    (children: React.ReactNode, route: RouteConfig) => {
+    (children: React.ReactNode, route: RouteLayoutContext) => {
       // Switch basato su route.layout
       if (route.layout === "sidebar") {
         return (
@@ -70,6 +70,17 @@ export function AppRoutes() {
         );
       }
 
+      if (route.layout === "guest") {
+        return (
+          <GuestLayout>
+            {/* Suspense per lazy loading */}
+            <Suspense fallback={<CompactLoadingFallback />}>
+              {children}
+            </Suspense>
+          </GuestLayout>
+        );
+      }
+
       // Nessun layout - usa Suspense esterno
       return children;
     },
@@ -77,32 +88,12 @@ export function AppRoutes() {
   );
 
   return (
-    <>
-      <Routes>
-        {/* Public/Guest Routes */}
-        <Route
-          path="/auth/login"
-          element={
-            <GuestRoute>
-              <LoginPage />
-            </GuestRoute>
-          }
-        />
-
-        {/* Protected Routes managed by RoleBasedRouter */}
-        <Route
-          path="/*"
-          element={
-            <RoleBasedRouter
-              user={user}
-              userRole={userRole ?? undefined}
-              isCheckingAuth={isCheckingAuth}
-              routeGroups={ROUTE_GROUPS}
-              layoutWrapper={layoutWrapper}
-            />
-          }
-        />
-      </Routes>
-    </>
+    <RoleBasedRouter
+      user={user}
+      userRole={userRole ?? undefined}
+      isCheckingAuth={isCheckingAuth}
+      routeGroups={ROUTE_GROUPS}
+      layoutWrapper={layoutWrapper}
+    />
   );
 }
