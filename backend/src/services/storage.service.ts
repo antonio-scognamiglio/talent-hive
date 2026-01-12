@@ -1,12 +1,6 @@
 import { Client } from "minio";
 import { config } from "../config/config";
 
-export interface FileUploadResult {
-  success: boolean;
-  minioPath?: string;
-  error?: string;
-}
-
 export class StorageService {
   private client: Client;
   readonly bucketName = "talenthive-cvs";
@@ -35,47 +29,40 @@ export class StorageService {
   }
 
   /**
-   * Upload a CV file to MinIO
-   * @param file - Express Multer file buffer
-   * @param fileName - Unique filename (e.g., candidateId-timestamp.pdf)
+   * Upload a file to MinIO
+   * @param buffer - File buffer (from multer)
+   * @param objectPath - Path in bucket (e.g., "cvs/userId/jobId/filename.pdf")
+   * @param contentType - MIME type
+   * @returns Path in MinIO
    */
-  public async uploadCV(
-    file: Express.Multer.File,
-    fileName: string
-  ): Promise<FileUploadResult> {
+  public async uploadFile(
+    buffer: Buffer,
+    objectPath: string,
+    contentType: string
+  ): Promise<string> {
     try {
       await this.ensureBucket();
-
-      const objectPath = `cvs/${fileName}`;
 
       await this.client.putObject(
         this.bucketName,
         objectPath,
-        file.buffer,
-        file.size,
+        buffer,
+        buffer.length,
         {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `inline; filename="${fileName}"`,
+          "Content-Type": contentType,
         }
       );
 
-      console.log(`✅ Uploaded CV: ${objectPath}`);
-
-      return {
-        success: true,
-        minioPath: objectPath,
-      };
+      console.log(`✅ Uploaded file: ${objectPath}`);
+      return objectPath;
     } catch (error) {
       console.error("❌ MinIO upload error:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
+      throw new Error("Failed to upload file to storage");
     }
   }
 
   /**
-   * Get a presigned URL to download/view a CV (valid for 24h by default)
+   * Get a presigned URL to download/view a file (valid for 24h by default)
    */
   public async getPresignedUrl(
     objectPath: string,
