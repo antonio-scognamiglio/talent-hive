@@ -5,6 +5,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator typescript {
+  provider = "prisma-generator-typescript-interfaces"
+  output   = "../../shared/types/index.ts"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
