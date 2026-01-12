@@ -1,11 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { hashPassword, verifyPassword } from "../utils/hash.util";
 import { signJwtCookie, type JwtPayload } from "../utils/jwt.util";
-import type { UserWithoutPassword } from "../types/user.types";
+import type { User, Role } from "@shared/types/index";
 
 const prisma = new PrismaClient();
 
-export type { UserWithoutPassword };
+// Use shared type for User without password
+export type UserWithoutPassword = Omit<User, "password">;
 
 export interface LoginDto {
   email: string;
@@ -17,11 +18,11 @@ export interface RegisterDto {
   password: string;
   firstName: string;
   lastName: string;
-  role?: "ADMIN" | "RECRUITER" | "CANDIDATE";
+  role?: Role;
 }
 
 export interface AuthResponse {
-  user: UserWithoutPassword; // ✅ Usa tipo Prisma
+  user: UserWithoutPassword;
   cookie: string;
   expiresAt: string;
 }
@@ -31,23 +32,19 @@ class AuthService {
    * Login user
    */
   async login(data: LoginDto): Promise<AuthResponse> {
-    // 1. Cerca utente per email
     const user = await prisma.user.findUnique({
       where: { email: data.email },
     });
 
-    // 2. Verifica che esista
     if (!user) {
       throw new Error("Email o password non corretta");
     }
 
-    // 3. Verifica password
     const isPasswordValid = await verifyPassword(data.password, user.password);
     if (!isPasswordValid) {
       throw new Error("Email o password non corretta");
     }
 
-    // 4. Genera JWT token + cookie
     const payload: JwtPayload = {
       userId: user.id,
       email: user.email,
@@ -56,16 +53,14 @@ class AuthService {
 
     const { cookie } = signJwtCookie(payload);
 
-    // 5. Calcola scadenza (24h da ora)
     const expiresAt = new Date(
       Date.now() + parseInt(process.env.JWT_EXPIRES_IN || "86400") * 1000
     ).toISOString();
 
-    // 6. Ritorna user (senza password!) + cookie
     const { password: _, ...userWithoutPassword } = user;
 
     return {
-      user: userWithoutPassword,
+      user: userWithoutPassword as UserWithoutPassword,
       cookie,
       expiresAt,
     };
@@ -75,7 +70,6 @@ class AuthService {
    * Register new user
    */
   async register(data: RegisterDto): Promise<AuthResponse> {
-    // 1. Controlla se email già esiste
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -84,10 +78,8 @@ class AuthService {
       throw new Error("Email già registrata");
     }
 
-    // 2. Hash password
     const hashedPassword = await hashPassword(data.password);
 
-    // 3. Crea utente
     const user = await prisma.user.create({
       data: {
         email: data.email,
@@ -98,7 +90,6 @@ class AuthService {
       },
     });
 
-    // 4. Genera JWT token + cookie (auto-login dopo registrazione)
     const payload: JwtPayload = {
       userId: user.id,
       email: user.email,
@@ -111,20 +102,19 @@ class AuthService {
       Date.now() + parseInt(process.env.JWT_EXPIRES_IN || "86400") * 1000
     ).toISOString();
 
-    // 5. Ritorna user (senza password!) + cookie
     const { password: _, ...userWithoutPassword } = user;
 
     return {
-      user: userWithoutPassword,
+      user: userWithoutPassword as UserWithoutPassword,
       cookie,
       expiresAt,
     };
   }
 
   /**
-   * Get user by ID (per middleware auth)
+   * Get user by ID
    */
-  async getUserById(userId: string) {
+  async getUserById(userId: string): Promise<UserWithoutPassword> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
@@ -134,7 +124,40 @@ class AuthService {
     }
 
     const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return userWithoutPassword as UserWithoutPassword;
+  }
+
+  /**
+   * Refresh token
+   */
+  async refresh(userId: string): Promise<AuthResponse> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error("Utente non trovato");
+    }
+
+    const payload: JwtPayload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const { cookie } = signJwtCookie(payload);
+
+    const expiresAt = new Date(
+      Date.now() + parseInt(process.env.JWT_EXPIRES_IN || "86400") * 1000
+    ).toISOString();
+
+    const { password: _, ...userWithoutPassword } = user;
+
+    return {
+      user: userWithoutPassword as UserWithoutPassword,
+      cookie,
+      expiresAt,
+    };
   }
 }
 

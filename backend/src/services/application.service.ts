@@ -5,7 +5,7 @@ import type {
   FinalDecision,
 } from "@prisma/client";
 import type { TransactionResult, PaginationParams } from "../types/api.types";
-import type { UserWithoutPassword } from "../types/user.types";
+import type { UserWithoutPassword } from "./auth.service";
 import { storageService } from "./storage.service";
 
 // DTO types
