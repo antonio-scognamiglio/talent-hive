@@ -14,7 +14,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Redirect solo se NON siamo già sulle pagine di auth
       if (!isOnAuthPage) {
-        window.location.href = "/auth/login";
+        window.location.href = "/auth";
       }
     }
     return Promise.reject(error);

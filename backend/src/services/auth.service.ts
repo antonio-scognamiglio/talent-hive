@@ -1,25 +1,12 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type User } from "@prisma/client";
 import { hashPassword, verifyPassword } from "../utils/hash.util";
 import { signJwtCookie, type JwtPayload } from "../utils/jwt.util";
-import type { User, Role } from "@shared/types/index";
+import type { Role, LoginDto, RegisterDto } from "@shared/types";
 
 const prisma = new PrismaClient();
 
 // Use shared type for User without password
 export type UserWithoutPassword = Omit<User, "password">;
-
-export interface LoginDto {
-  email: string;
-  password: string;
-}
-
-export interface RegisterDto {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  role?: Role;
-}
 
 export interface AuthResponse {
   user: UserWithoutPassword;
@@ -69,24 +56,26 @@ class AuthService {
   /**
    * Register new user
    */
-  async register(data: RegisterDto): Promise<AuthResponse> {
+  async register(dto: RegisterDto): Promise<AuthResponse> {
     const existingUser = await prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email: dto.email },
     });
 
     if (existingUser) {
-      throw new Error("Email già registrata");
+      throw new Error("User already exists");
     }
 
-    const hashedPassword = await hashPassword(data.password);
+    const hashedPassword = await hashPassword(dto.password); // Reverted to original hashPassword
 
+    // SECURITY: Force role to CANDIDATE for public registration
+    // Ignores any role sent in DTO to prevent privilege escalation
     const user = await prisma.user.create({
       data: {
-        email: data.email,
+        email: dto.email,
         password: hashedPassword,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role || "CANDIDATE",
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        role: "CANDIDATE",
       },
     });
 

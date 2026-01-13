@@ -1,19 +1,6 @@
 import { apiClient } from "@/features/shared/api";
 import type { AuthMeResponseDto } from "@/features/auth/types/auth-me.types";
-import type { Role } from "@shared/types/index";
-
-export interface LoginDto {
-  email: string;
-  password: string;
-}
-
-export interface RegisterDto {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  role?: Role;
-}
+import type { LoginDto, RegisterDto } from "@shared/types";
 
 export const authService = {
   /**
