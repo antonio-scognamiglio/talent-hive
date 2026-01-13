@@ -7,7 +7,91 @@
     <title>frontend</title>
   </head>
   <body>
-    <div id="root"></div>
+    <script>
+      // Critical Theme Script: Runs before rendering to prevent theme flash
+      (function () {
+        const storageKey = 'talenthive-theme';
+        const theme = localStorage.getItem(storageKey);
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (theme === 'dark' || (theme === 'system' && systemDark) || (!theme && systemDark)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
+    <div id="root">
+      <style>
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+          height: 100%;
+          width: 100%;
+        }
+
+        .startup-loader {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          width: 100vw;
+          /* Default (Light) - TalentHive Light Background */
+          background-color: hsl(0, 0%, 99%);
+          color: hsl(200, 90%, 40%);
+          /* Primary Blue */
+          flex-direction: column;
+          font-family: system-ui, -apple-system, sans-serif;
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 9999;
+        }
+
+        /* Dark Mode Support via .dark class applied by script */
+        html.dark .startup-loader {
+          /* TalentHive Dark Background */
+          background-color: hsl(215, 25%, 8%);
+          /* TalentHive Dark Primary */
+          color: hsl(200, 90%, 60%);
+        }
+
+        .spinner-svg {
+          width: 48px;
+          height: 48px;
+          animation: spin 1s linear infinite;
+          color: currentColor;
+        }
+
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .loader-text {
+          margin-top: 16px;
+          font-size: 14px;
+          opacity: 0.7;
+          font-weight: 500;
+          letter-spacing: 0.5px;
+        }
+      </style>
+      <div class="startup-loader">
+        <!-- SVG mimicking Lucide Loader2 -->
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke-width="2" stroke="currentColor" class="spinner-svg">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
+        <div class="loader-text">TalentHive</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
