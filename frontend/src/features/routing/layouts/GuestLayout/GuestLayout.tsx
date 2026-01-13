@@ -16,9 +16,9 @@ interface GuestLayoutProps {
  */
 export function GuestLayout({ children }: GuestLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+      <header className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 shrink-0">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo / Brand */}
           <div className="flex items-center gap-2">
@@ -33,8 +33,8 @@ export function GuestLayout({ children }: GuestLayoutProps) {
         </div>
       </header>
 
-      {/* Main Content - Centered */}
-      <main className="flex-1 flex items-center justify-center p-4">
+      {/* Main Content - Centered (Full Screen) */}
+      <main className="flex-1 min-h-0 overflow-auto flex items-center justify-center">
         {children}
       </main>
 
