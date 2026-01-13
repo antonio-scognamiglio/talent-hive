@@ -1,9 +1,8 @@
 import { useMemo, useCallback, Suspense } from "react";
 import { RoleBasedRouter } from "@/features/routing/components";
 import { SidebarLayout } from "@/features/routing/layouts/SidebarLayout";
-import { GuestLayout } from "@/features/routing/layouts/GuestLayout";
+import { MinimalLayout } from "@/features/routing/layouts/MinimalLayout";
 import { CompactLoadingFallback } from "@/features/routing/components/LoadingFallback";
-import { ROUTE_GROUPS } from "@/features/shared/config/routes.config";
 import { getLayoutConfig } from "@/features/shared/config/layout.config";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 import { useIsMobile } from "@/features/shared/hooks/useIsMobile";
@@ -11,6 +10,7 @@ import { ThemeToggle } from "@/features/shared/components/ThemeToggle";
 
 import type { RouteLayoutContext } from "@/features/routing/types";
 import { getRoutesForRole } from "@/features/routing/utils/route-helpers";
+import { PROTECTED_ROUTE_GROUPS } from "@/features/shared/config/routes.config";
 
 /**
  * App Routes Component
@@ -19,7 +19,7 @@ import { getRoutesForRole } from "@/features/routing/utils/route-helpers";
  * Responsabilità:
  * - Filtrare le rotte in base al ruolo utente
  * - Configurare il layout (sidebar/topbar) in base al ruolo e device
- * - Gestire il layoutWrapper per applicare SidebarLayout/GuestLayout alle rotte
+ * - Gestire il layoutWrapper per applicare SidebarLayout/MinimalLayout alle rotte
  * - Separare rotte pubbliche (login) da quelle protette
  */
 export function AppRoutes() {
@@ -29,7 +29,7 @@ export function AppRoutes() {
   // Filtra le rotte solo per il ruolo corrente
   const userRoutes = useMemo(() => {
     if (!user || !userRole) return [];
-    return getRoutesForRole(ROUTE_GROUPS, userRole);
+    return getRoutesForRole(PROTECTED_ROUTE_GROUPS, userRole);
   }, [user, userRole]);
 
   // Ottieni configurazione layout per il ruolo corrente (con supporto responsive)
@@ -70,14 +70,14 @@ export function AppRoutes() {
         );
       }
 
-      if (route.layout === "guest") {
+      if (route.layout === "minimal") {
         return (
-          <GuestLayout>
+          <MinimalLayout>
             {/* Suspense per lazy loading */}
             <Suspense fallback={<CompactLoadingFallback />}>
               {children}
             </Suspense>
-          </GuestLayout>
+          </MinimalLayout>
         );
       }
 
@@ -92,7 +92,7 @@ export function AppRoutes() {
       user={user}
       userRole={userRole ?? undefined}
       isCheckingAuth={isCheckingAuth}
-      routeGroups={ROUTE_GROUPS}
+      routeGroups={PROTECTED_ROUTE_GROUPS}
       layoutWrapper={layoutWrapper}
     />
   );

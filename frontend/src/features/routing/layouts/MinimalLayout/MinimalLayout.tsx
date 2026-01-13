@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/features/shared/components/ThemeToggle";
 
-interface GuestLayoutProps {
+interface MinimalLayoutProps {
   children: ReactNode;
 }
 
 /**
- * Guest Layout
+ * Minimal Layout
  * Layout per pagine pubbliche/non autenticate
  *
  * Struttura:
@@ -14,7 +14,7 @@ interface GuestLayoutProps {
  * - Main: Content centrato verticalmente
  * - Footer: Opzionale (futuro)
  */
-export function GuestLayout({ children }: GuestLayoutProps) {
+export function MinimalLayout({ children }: MinimalLayoutProps) {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header */}

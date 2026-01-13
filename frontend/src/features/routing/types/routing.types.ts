@@ -6,7 +6,7 @@ import type { User } from "@shared/types/index";
  * Layout Type
  * Tipi di layout disponibili per le rotte
  */
-export type LayoutType = "sidebar" | "navbar" | "guest" | null;
+export type LayoutType = "sidebar" | "navbar" | "minimal" | null;
 
 /**
  * Route Configuration
@@ -18,12 +18,8 @@ export interface RouteConfig<TRole extends string = string> {
   layout?: LayoutType;
   requiredPermissions?: string[];
 
-  /**
-   * Ruoli permessi per accedere alla rotta.
-   * - `null`: Rotta Pubblica
-   * - `TRole[]`: Rotta Protetta
-   */
-  allowedRoles: TRole[] | null;
+  /** Ruoli autorizzati ad accedere a questa rotta */
+  allowedRoles: TRole[];
 
   meta?: {
     title: string;
@@ -53,47 +49,13 @@ export interface RouteLayoutContext {
 export interface RouteGroup<TRole extends string = string> {
   name: string;
 
-  /**
-   * Ruoli permessi per il gruppo.
-   * - `null`: Gruppo Pubblico
-   * - `TRole[]`: Gruppo Protetto
-   */
-  allowedRoles: TRole[] | null;
+  /** Ruoli autorizzati ad accedere a questa rotta */
+  allowedRoles: TRole[];
 
   routes: RouteConfig<TRole>[];
   icon?: LucideIcon;
   order?: number;
 }
-
-/**
- * START STRICT CONFIGURATION TYPES
- * Helper types for type-safe configuration in routes.config.ts
- */
-
-/**
- * Strict Guest Group
- * Forces allowedRoles to be NULL.
- * THESE ROUTES ARE FOR GUESTS ONLY (e.g. Login, Register).
- * Authenticated users will be redirected away from these routes.
- */
-export type StrictGuestGroup<TRole extends string = string> = Omit<
-  RouteGroup<TRole>,
-  "allowedRoles"
-> & {
-  allowedRoles: null;
-};
-
-/**
- * Strict Protected Group
- * Forces allowedRoles to be TRole[] (not null)
- */
-export type StrictProtectedGroup<TRole extends string = string> = Omit<
-  RouteGroup<TRole>,
-  "allowedRoles"
-> & {
-  allowedRoles: TRole[];
-};
-/** END STRICT CONFIGURATION TYPES */
 
 /**
  * Sidebar Item

@@ -142,13 +142,13 @@ export function groupRoutesByLayout<TRole extends string>(
 ): {
   sidebar: RouteConfig<TRole>[];
   navbar: RouteConfig<TRole>[];
-  guest: RouteConfig<TRole>[];
+  minimal: RouteConfig<TRole>[];
   none: RouteConfig<TRole>[];
 } {
   return {
     sidebar: filterRoutesByLayout(routes, "sidebar"),
     navbar: filterRoutesByLayout(routes, "navbar"),
-    guest: filterRoutesByLayout(routes, "guest"),
+    minimal: filterRoutesByLayout(routes, "minimal"),
     none: filterRoutesByLayout(routes, null),
   };
 }

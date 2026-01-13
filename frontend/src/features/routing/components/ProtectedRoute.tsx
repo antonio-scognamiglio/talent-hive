@@ -64,7 +64,7 @@ export function ProtectedRoute<TRole extends string>({
   allowedRoles,
   currentUserRole,
   isCheckingAuth,
-  authRedirectPath = "/auth/login",
+  authRedirectPath = "/auth",
   onLoading,
   onAccessDenied,
 }: ProtectedRouteProps<TRole>) {
