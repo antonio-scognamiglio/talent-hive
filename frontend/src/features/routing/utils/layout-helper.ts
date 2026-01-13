@@ -15,7 +15,7 @@ export type LayoutWrapperFn = (
  *
  * Usato da:
  * - RoleBasedRouter (per rotte protette)
- * - AppRoutes (per rotte guest/pubbliche)
+ * - AppRoutes (per rotte guest e pubbliche)
  *
  * @param content - Il contenuto da wrappare
  * @param route - La configurazione della route (path + layout)

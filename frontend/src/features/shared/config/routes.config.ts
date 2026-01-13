@@ -1,124 +1,69 @@
 import { lazy } from "react";
 import { LayoutDashboard } from "lucide-react";
 import { USER_ROLES, type UserRole } from "@/features/shared/types/roles.types";
-import type {
-  RouteGroup,
-  StrictGuestGroup,
-  StrictProtectedGroup,
-} from "@/features/routing/types";
+import type { RouteGroup } from "@/features/routing/types";
 
 // ==========================================================================
 // LAZY LOADED COMPONENTS
 // ==========================================================================
-const Auth = lazy(() => import("@/pages/auth/Auth"));
-
 // Jobs pages (role-specific)
 const CandidateJobsPage = lazy(() => import("@/pages/jobs/CandidateJobsPage"));
 const RecruiterJobsPage = lazy(() => import("@/pages/jobs/RecruiterJobsPage"));
 const AdminJobsPage = lazy(() => import("@/pages/jobs/AdminJobsPage"));
 
 // ==========================================================================
-// CONFIGURATION ALIASES
-// Shortcut to avoid repeating <UserRole> everywhere
-// ==========================================================================
-type AppGuestOnlyGroup = StrictGuestGroup<UserRole>;
-type AppProtectedGroup = StrictProtectedGroup<UserRole>;
-
-// ==========================================================================
-// PUBLIC ROUTES CONFIGURATION
-// ==========================================================================
-const GUEST_GROUPS: AppGuestOnlyGroup[] = [
-  {
-    name: "Auth",
-    allowedRoles: null, // REQUIRED by StrictPublicGroup
-    routes: [
-      {
-        path: "/auth",
-        element: Auth,
-        allowedRoles: null,
-        layout: "guest",
-      },
-    ],
-  },
-];
-
-// ==========================================================================
 // PROTECTED ROUTES CONFIGURATION
 // ==========================================================================
-const PROTECTED_GROUPS: AppProtectedGroup[] = [
-  // CANDIDATE: Jobs Marketplace
+export const PROTECTED_ROUTE_GROUPS: RouteGroup<UserRole>[] = [
   {
-    name: "Candidate Jobs",
-    allowedRoles: [USER_ROLES.CANDIDATE],
+    name: "Home",
+    allowedRoles: [
+      USER_ROLES.RECRUITER,
+      USER_ROLES.ADMIN,
+      USER_ROLES.CANDIDATE,
+    ],
     icon: LayoutDashboard,
     order: 1,
     routes: [
       {
-        path: "/jobs",
+        path: "/",
         element: CandidateJobsPage,
         allowedRoles: [USER_ROLES.CANDIDATE],
         layout: "sidebar",
         meta: {
-          title: "Available Jobs",
+          title: "Jobs Marketplace",
           icon: LayoutDashboard,
           showInSidebar: true,
           sidebarOrder: 1,
-          description: "Browse jobs",
+          description: "Cerca e candidati alle offerte di lavoro",
         },
       },
-    ],
-  },
-  // RECRUITER: Jobs Management
-  {
-    name: "Recruiter Jobs",
-    allowedRoles: [USER_ROLES.RECRUITER],
-    icon: LayoutDashboard,
-    order: 1,
-    routes: [
       {
-        path: "/jobs",
+        path: "/",
         element: RecruiterJobsPage,
         allowedRoles: [USER_ROLES.RECRUITER],
         layout: "sidebar",
         meta: {
-          title: "Jobs Management",
+          title: "Annunci Pubblicati",
           icon: LayoutDashboard,
           showInSidebar: true,
           sidebarOrder: 1,
-          description: "Manage jobs",
+          description: "Gestisci i tuoi annunci di lavoro",
         },
       },
-    ],
-  },
-  // ADMIN: Platform Jobs
-  {
-    name: "Admin Jobs",
-    allowedRoles: [USER_ROLES.ADMIN],
-    icon: LayoutDashboard,
-    order: 1,
-    routes: [
       {
-        path: "/jobs",
+        path: "/",
         element: AdminJobsPage,
         allowedRoles: [USER_ROLES.ADMIN],
         layout: "sidebar",
         meta: {
-          title: "Platform Jobs",
+          title: "Gestione Annunci",
           icon: LayoutDashboard,
           showInSidebar: true,
           sidebarOrder: 1,
-          description: "All jobs",
+          description: "Gestisci tutti gli annunci di lavoro",
         },
       },
     ],
   },
-];
-
-// ==========================================================================
-// UNIFIED EXPORT
-// Combines both for the router consumption
-// ==========================================================================
-export const ROUTE_GROUPS: RouteGroup<UserRole>[] = [
-  ...GUEST_GROUPS,
-  ...PROTECTED_GROUPS,
 ];

@@ -1,87 +1,114 @@
 import { Suspense, useMemo } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { GuestRoute } from "./GuestRoute";
 import { LoadingFallback } from "./LoadingFallback";
-
-import {
-  applyLayoutToRoute,
-  type LayoutWrapperFn,
-} from "../utils/layout-helper";
-import type { RouteGroup } from "../types";
+import { getRoutesForRole } from "../utils/route-helpers";
 import NotFound from "@/pages/not-found/NotFound";
+import type { RouteGroup, RouteConfig } from "../types";
 
 /**
  * Props per il componente RoleBasedRouter
  */
 interface RoleBasedRouterProps<TRole extends string, TUser> {
+  /** Utente corrente (null se non autenticato) */
   user: TUser | null;
+
+  /** Ruolo dell'utente corrente (undefined se non autenticato) - già memoizzato nel provider */
   userRole: TRole | undefined;
+
+  /** Se è in corso il check dell'autenticazione */
   isCheckingAuth: boolean;
+
+  /** Gruppi di rotte configurati */
   routeGroups: RouteGroup<TRole>[];
-  layoutWrapper?: LayoutWrapperFn;
+
+  /** Wrapper per applicare layout alle rotte */
+  layoutWrapper?: (
+    children: React.ReactNode,
+    route: RouteConfig<TRole>
+  ) => React.ReactNode;
+
+  /** Path di redirect se non autenticato */
   authRedirectPath?: string;
+
+  /** Componente custom per loading */
   loadingFallback?: React.ReactNode;
+
+  /** Componente custom per accesso negato */
   accessDeniedFallback?: React.ReactNode;
+
+  /** Componente custom per loading di auth */
   authLoadingFallback?: React.ReactNode;
 }
 
+/**
+ * Role Based Router Component
+ * Router principale che genera dinamicamente le rotte in base al ruolo dell'utente
+ *
+ * Funzionamento:
+ * 1. Filtra le rotte accessibili per il ruolo corrente
+ * 2. Genera le Route components dinamicamente
+ * 3. Applica ProtectedRoute guard a tutte le rotte
+ * 4. Applica layout tramite layoutWrapper se specificato
+ * 5. Gestisce redirect se non autenticato
+ *
+ * Vantaggi:
+ * - Zero rotte hardcoded
+ * - Aggiungere rotta = solo modifica routeGroups
+ * - Type-safe con TypeScript
+ * - Performance: solo rotte autorizzate vengono caricate
+ *
+ * @example
+ * <RoleBasedRouter
+ *   user={user}
+ *   userRole={userRole}
+ *   isCheckingAuth={isCheckingAuth}
+ *   routeGroups={ROUTE_GROUPS}
+ *   layoutWrapper={(children, route) => (
+ *     <SidebarLayout config={LAYOUT_CONFIG}>
+ *       {children}
+ *     </SidebarLayout>
+ *   )}
+ * />
+ */
 export function RoleBasedRouter<TRole extends string, TUser>({
   user,
   userRole,
   isCheckingAuth,
   routeGroups,
   layoutWrapper,
-  authRedirectPath = "/auth/login",
+  authRedirectPath = "/auth",
   loadingFallback,
   accessDeniedFallback,
   authLoadingFallback,
 }: RoleBasedRouterProps<TRole, TUser>) {
-  const allRoutes = useMemo(() => {
-    return routeGroups.flatMap((group) => group.routes);
-  }, [routeGroups]);
+  const userRoutes = useMemo(() => {
+    if (!userRole) return [];
+    return getRoutesForRole(routeGroups, userRole);
+  }, [routeGroups, userRole]);
 
-  if (isCheckingAuth) {
+  // Se non autenticato e non in check, redirect
+  if (!user && !isCheckingAuth) {
+    return <Navigate to={authRedirectPath} replace />;
+  }
+
+  // Loading solo se stiamo ancora controllando E non abbiamo ancora un utente
+  // (caso tipico: primo accesso alla pagina o refresh)
+  if (!user && isCheckingAuth) {
     return authLoadingFallback || <LoadingFallback />;
   }
 
+  // Se arriviamo qui, significa che user esiste → generiamo le rotte
   return (
     <Suspense fallback={loadingFallback || <LoadingFallback />}>
       <Routes>
-        {allRoutes.map((route) => {
-          // Determine if route is Guest Only (allowedRoles is explicitly null)
-          // or Protected (allowedRoles is an array)
-          const isGuestOnly = route.allowedRoles === null;
-          const allowedRoles = route.allowedRoles || [];
-
-          // Access Check:
-          // 1. Guest Only -> Allow (GuestRoute will handle redirect if logged in)
-          // 2. Protected -> Check if user has role
-
-          const hasRole = !!(
-            user &&
-            userRole &&
-            allowedRoles?.includes(userRole)
-          );
-
-          // Render Logic:
-          // - Render if Guest Only
-          // - Render if Protected AND (LoggedOut OR HasRole) -> ProtectedRoute handles LoggedOut redirect.
-          // - HIDE if Protected AND LoggedIn AND NoRole (Security/UX choice: 404 for unauthorized)
-
-          const canRender = isGuestOnly || !user || hasRole;
-
-          if (!canRender) return null;
-
+        {userRoutes.map((route) => {
           const Component = route.element;
 
-          const content = isGuestOnly ? (
-            <GuestRoute>
-              <Component />
-            </GuestRoute>
-          ) : (
+          // Content base con ProtectedRoute
+          const content = (
             <ProtectedRoute
-              allowedRoles={allowedRoles || []}
+              allowedRoles={route.allowedRoles}
               currentUserRole={userRole}
               isCheckingAuth={isCheckingAuth}
               authRedirectPath={authRedirectPath}
@@ -96,8 +123,9 @@ export function RoleBasedRouter<TRole extends string, TUser>({
             </ProtectedRoute>
           );
 
+          // Applica layout se specificato
           const wrappedContent = layoutWrapper
-            ? applyLayoutToRoute(content, route, layoutWrapper)
+            ? layoutWrapper(content, route)
             : content;
 
           return (
@@ -108,11 +136,8 @@ export function RoleBasedRouter<TRole extends string, TUser>({
             />
           );
         })}
-        {/* 
-          Catch-all & Role-Independent Routes.
-          Routes placed here are accessible to ALL users (Guest & Authenticated)
-          as they are outside the guard logic (e.g. 404 Not Found).
-        */}
+
+        {/* Catch-all: mostra NotFound per rotte non trovate */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
