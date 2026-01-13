@@ -10,6 +10,7 @@ import {
 } from "@/features/shared/components/fields";
 import { loginSchema, type LoginFormData } from "../schemas/login.schema";
 import { useAuthContext } from "../hooks/useAuthContext";
+import { handleError } from "@/features/shared/utils/error.utils";
 
 /**
  * LoginForm Component
@@ -23,7 +24,6 @@ export function LoginForm() {
   const navigate = useNavigate();
 
   const form = useForm<LoginFormData>({
-    // @ts-expect-error - Zod v3 type compatibility issue with @hookform/resolvers
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -35,10 +35,9 @@ export function LoginForm() {
     try {
       await login(data.email, data.password);
       toast.success("Bentornato!");
-      navigate("/jobs");
+      navigate("/");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Accesso fallito";
-      toast.error(message);
+      handleError(err, "Accesso fallito");
     }
   };
 

@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const performLogout = useCallback(async () => {
+  const logout = useCallback(async () => {
     setIsLoading(true);
     try {
       await authService.logout();
@@ -57,11 +57,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(false);
     }
   }, []);
-
-  const logout = useCallback(async () => {
-    // Qui in futuro potremo aggiungere la logica per il dialog di conferma
-    await performLogout();
-  }, [performLogout]);
 
   const refreshMe = useCallback(async () => {
     try {
@@ -83,10 +78,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isCheckingAuth,
       login,
       logout,
-      performLogout,
       refreshMe,
     }),
-    [user, isLoading, isCheckingAuth, login, logout, performLogout, refreshMe]
+    [user, isLoading, isCheckingAuth, login, logout, refreshMe]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
