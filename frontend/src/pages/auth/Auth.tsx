@@ -35,7 +35,7 @@ export default function Auth() {
             </TabsContent>
 
             <TabsContent value="register" className="flex-1 min-h-0">
-              <RegisterForm />
+              <RegisterForm onSuccess={() => setActiveTab("login")} />
             </TabsContent>
           </Tabs>
         </AuthCard>

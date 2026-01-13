@@ -1,6 +1,5 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -9,23 +8,15 @@ import {
   PasswordInputField,
   TextInputField,
 } from "@/features/shared/components/fields";
-import { z } from "zod";
+import {
+  registerSchema,
+  type RegisterFormData,
+} from "../schemas/register.schema";
+import { useAuthOperations } from "../hooks/useAuthOperations";
 
-// Register schema WITHOUT role (only CANDIDATE can register)
-const registerSchema = z
-  .object({
-    email: z.string().min(1, "Email è richiesta").email("Email non valida"),
-    password: z.string().min(8, "Password deve essere almeno 8 caratteri"),
-    confirmPassword: z.string().min(1, "Conferma password"),
-    firstName: z.string().min(2, "Nome deve essere almeno 2 caratteri"),
-    lastName: z.string().min(2, "Cognome deve essere almeno 2 caratteri"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Le password non coincidono",
-    path: ["confirmPassword"],
-  });
-
-type RegisterFormData = z.infer<typeof registerSchema>;
+interface RegisterFormProps {
+  onSuccess?: () => void;
+}
 
 /**
  * RegisterForm Component
@@ -34,11 +25,8 @@ type RegisterFormData = z.infer<typeof registerSchema>;
  * RECRUITER and ADMIN accounts are provisioned by admins.
  * Matches lex-nexus structure: flex column, scrollable content, sticky button.
  */
-export function RegisterForm() {
-  const navigate = useNavigate();
-
+export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const form = useForm<RegisterFormData>({
-    // @ts-expect-error - Zod v3 type compatibility issue with @hookform/resolvers
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: "",
@@ -49,16 +37,30 @@ export function RegisterForm() {
     },
   });
 
+  const { registerCandidateMut } = useAuthOperations({
+    config: {
+      registerCandidate: {
+        onSuccess: () => {
+          toast.success("Registrazione completata! Effettua l'accesso.");
+          form.reset();
+          onSuccess?.();
+        },
+      },
+    },
+  });
+
   const onSubmit = async (data: RegisterFormData) => {
+    // Add role: CANDIDATE to the data payload
+    const payload = { ...data, role: "CANDIDATE" as const };
+
+    // Using mutateAsync to handle success/error in the UI component logic if needed
+    // or rely on the hook. Since we want to reset form, let's use mutateAsync.
     try {
-      // TODO: Wire to authService.register() - defaults to CANDIDATE role
-      console.log("Register data:", { ...data, role: "CANDIDATE" });
-      toast.success("Registrazione completata! Effettua l'accesso.");
-      navigate("/jobs");
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Registrazione fallita";
-      toast.error(message);
+      await registerCandidateMut.mutateAsync(payload);
+      form.reset();
+    } catch (error) {
+      // Toast handled by hook default error handler
+      console.error("Registration error:", error);
     }
   };
 

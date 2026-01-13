@@ -10,6 +10,7 @@ import { z } from "zod";
  * - First name and last name required (min 2 chars)
  * - Role must be valid enum value
  */
+// Register schema WITHOUT role (only CANDIDATE can register)
 export const registerSchema = z
   .object({
     email: z.string().min(1, "Email è richiesta").email("Email non valida"),
@@ -17,7 +18,7 @@ export const registerSchema = z
     confirmPassword: z.string().min(1, "Conferma password è richiesta"),
     firstName: z.string().min(2, "Il nome deve essere almeno 2 caratteri"),
     lastName: z.string().min(2, "Il cognome deve essere almeno 2 caratteri"),
-    role: z.enum(["ADMIN", "RECRUITER", "CANDIDATE"]),
+    role: z.enum(["ADMIN", "RECRUITER", "CANDIDATE"]).optional(), // Optional in frontend form
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Le password non coincidono",
