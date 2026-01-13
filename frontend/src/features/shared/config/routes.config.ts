@@ -10,8 +10,12 @@ import type {
 // ==========================================================================
 // LAZY LOADED COMPONENTS
 // ==========================================================================
-const Dashboard = lazy(() => import("@/pages/dashboard/Dashboard"));
-const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
+const Auth = lazy(() => import("@/pages/auth/Auth"));
+
+// Jobs pages (role-specific)
+const CandidateJobsPage = lazy(() => import("@/pages/jobs/CandidateJobsPage"));
+const RecruiterJobsPage = lazy(() => import("@/pages/jobs/RecruiterJobsPage"));
+const AdminJobsPage = lazy(() => import("@/pages/jobs/AdminJobsPage"));
 
 // ==========================================================================
 // CONFIGURATION ALIASES
@@ -29,8 +33,8 @@ const GUEST_GROUPS: AppGuestOnlyGroup[] = [
     allowedRoles: null, // REQUIRED by StrictPublicGroup
     routes: [
       {
-        path: "/auth/login",
-        element: LoginPage,
+        path: "/auth",
+        element: Auth,
         allowedRoles: null,
         layout: "guest",
       },
@@ -42,31 +46,68 @@ const GUEST_GROUPS: AppGuestOnlyGroup[] = [
 // PROTECTED ROUTES CONFIGURATION
 // ==========================================================================
 const PROTECTED_GROUPS: AppProtectedGroup[] = [
+  // CANDIDATE: Jobs Marketplace
   {
-    name: "Home",
-    allowedRoles: [
-      USER_ROLES.ADMIN,
-      USER_ROLES.RECRUITER,
-      USER_ROLES.CANDIDATE,
-    ],
+    name: "Candidate Jobs",
+    allowedRoles: [USER_ROLES.CANDIDATE],
     icon: LayoutDashboard,
     order: 1,
     routes: [
       {
-        path: "/",
-        element: Dashboard,
-        allowedRoles: [
-          USER_ROLES.ADMIN,
-          USER_ROLES.RECRUITER,
-          USER_ROLES.CANDIDATE,
-        ],
+        path: "/jobs",
+        element: CandidateJobsPage,
+        allowedRoles: [USER_ROLES.CANDIDATE],
         layout: "sidebar",
         meta: {
-          title: "Dashboard",
+          title: "Available Jobs",
           icon: LayoutDashboard,
           showInSidebar: true,
           sidebarOrder: 1,
-          description: "Overview",
+          description: "Browse jobs",
+        },
+      },
+    ],
+  },
+  // RECRUITER: Jobs Management
+  {
+    name: "Recruiter Jobs",
+    allowedRoles: [USER_ROLES.RECRUITER],
+    icon: LayoutDashboard,
+    order: 1,
+    routes: [
+      {
+        path: "/jobs",
+        element: RecruiterJobsPage,
+        allowedRoles: [USER_ROLES.RECRUITER],
+        layout: "sidebar",
+        meta: {
+          title: "Jobs Management",
+          icon: LayoutDashboard,
+          showInSidebar: true,
+          sidebarOrder: 1,
+          description: "Manage jobs",
+        },
+      },
+    ],
+  },
+  // ADMIN: Platform Jobs
+  {
+    name: "Admin Jobs",
+    allowedRoles: [USER_ROLES.ADMIN],
+    icon: LayoutDashboard,
+    order: 1,
+    routes: [
+      {
+        path: "/jobs",
+        element: AdminJobsPage,
+        allowedRoles: [USER_ROLES.ADMIN],
+        layout: "sidebar",
+        meta: {
+          title: "Platform Jobs",
+          icon: LayoutDashboard,
+          showInSidebar: true,
+          sidebarOrder: 1,
+          description: "All jobs",
         },
       },
     ],
