@@ -104,11 +104,12 @@
     hsl(215 15% 98%)
   );
   --gradient-accent: linear-gradient(135deg, hsl(25 95% 55%), hsl(25 95% 48%));
+  /* Modern professional gradient: Ocean Blue → Deep Indigo → Purple */
   --gradient-hero: linear-gradient(
     135deg,
-    hsl(200 90% 40%),
-    hsl(200 90% 50%),
-    hsl(25 95% 55%)
+    hsl(200 95% 40%),
+    hsl(230 85% 50%),
+    hsl(260 70% 55%)
   );
 
   /* Professional Animations */
@@ -268,11 +269,12 @@
     hsl(215 15% 20%)
   );
   --gradient-accent: linear-gradient(135deg, hsl(25 95% 65%), hsl(25 95% 70%));
+  /* Dark mode: Deep Navy → Vibrant Blue → Purple */
   --gradient-hero: linear-gradient(
     135deg,
-    hsl(200 90% 55%),
-    hsl(200 90% 63%),
-    hsl(200 85% 58%)
+    hsl(220 90% 25%),
+    hsl(230 80% 40%),
+    hsl(260 70% 50%)
   );
 
   /* Dark mode chart colors (più luminosi per contrasto) */
@@ -372,7 +374,9 @@
 
   /* Professional Layout Utilities */
   .section-padding {
-    @apply px-4 sm:px-6 lg:px-8 py-8 lg:py-12;
+    @apply px-4 sm:px-6 lg:px-8;
+    padding-top: 10dvh;
+    padding-bottom: 10dvh;
   }
 
   .container-professional {
