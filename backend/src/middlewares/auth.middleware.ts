@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken, type JwtPayload } from "../utils/jwt.util";
-import {
-  authService,
-  type UserWithoutPassword,
-} from "../services/auth.service";
+import { authService } from "../services/auth.service";
+import type { UserWithoutPassword } from "@shared/types";
 
 /**
  * Express Request con user autenticato

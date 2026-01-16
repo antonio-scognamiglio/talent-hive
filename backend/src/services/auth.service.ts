@@ -1,18 +1,15 @@
 import { PrismaClient, type User } from "@prisma/client";
 import { hashPassword, verifyPassword } from "../utils/hash.util";
 import { signJwtCookie, type JwtPayload } from "../utils/jwt.util";
-import type { Role, LoginDto, RegisterDto } from "@shared/types";
+import type {
+  Role,
+  LoginDto,
+  RegisterDto,
+  UserWithoutPassword,
+  AuthResponse,
+} from "@shared/types";
 
 const prisma = new PrismaClient();
-
-// Use shared type for User without password
-export type UserWithoutPassword = Omit<User, "password">;
-
-export interface AuthResponse {
-  user: UserWithoutPassword;
-  cookie: string;
-  expiresAt: string;
-}
 
 class AuthService {
   /**

@@ -2,7 +2,7 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { jobService } from "../services/job.service";
-import type { JobListQuery } from "../services/job.service";
+import type { ListJobsDto } from "@shared/types";
 
 const router = Router();
 
@@ -14,7 +14,7 @@ const router = Router();
  */
 router.post("/list", authMiddleware, async (req, res) => {
   try {
-    const query: JobListQuery = req.body;
+    const query: ListJobsDto = req.body;
     const result = await jobService.getJobs(query, req.user!);
     res.json(result);
   } catch (error) {

@@ -4,22 +4,13 @@ import type {
   WorkflowStatus,
   FinalDecision,
 } from "@prisma/client";
-import type { TransactionResult, PaginationParams } from "../types/api.types";
-import type { UserWithoutPassword } from "./auth.service";
+import type {
+  UserWithoutPassword,
+  CreateApplicationDto,
+  ListApplicationsDto,
+} from "@shared/types";
+import type { PaginatedResponse } from "../types/pagination.types";
 import { storageService } from "./storage.service";
-
-// DTO types
-export type CreateApplicationDto = {
-  jobId: string;
-  coverLetter?: string;
-};
-
-export type ApplicationListQuery = PaginationParams & {
-  where?: {
-    jobId?: string;
-    workflowStatus?: WorkflowStatus;
-  };
-};
 
 class ApplicationService {
   /**
@@ -27,9 +18,9 @@ class ApplicationService {
    * RBAC: CANDIDATE sees only their own, RECRUITER sees for their jobs, ADMIN sees all
    */
   async getApplications(
-    query: ApplicationListQuery,
+    query: ListApplicationsDto,
     user: UserWithoutPassword
-  ): Promise<TransactionResult<Application>> {
+  ): Promise<PaginatedResponse<Application>> {
     const { skip = 0, take = 10, where } = query;
 
     const safeWhere: any = {};
@@ -78,7 +69,11 @@ class ApplicationService {
       prisma.application.count({ where: safeWhere }),
     ]);
 
-    return { data, count };
+    return {
+      data,
+      count,
+      query: { where: safeWhere, skip, take },
+    };
   }
 
   /**
