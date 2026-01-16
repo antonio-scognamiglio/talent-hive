@@ -7,7 +7,7 @@ generator client {
 
 generator typescript {
   provider = "prisma-generator-typescript-interfaces"
-  output   = "../../shared/types/index.ts"
+  output   = "../../shared/types/entities/generated/interfaces.ts"
 }
 
 datasource db {
