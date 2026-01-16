@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Logo } from "@/features/shared/components/Logo";
+import { Title } from "@/features/shared/components/Title";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +17,103 @@ import type {
   SidebarLayoutConfig,
   UserMenuProps,
 } from "../../types";
+
+/**
+ * Props per il componente SidebarContent
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface SidebarContentProps<TUser = any> {
+  config?: SidebarLayoutConfig;
+  user?: TUser;
+  sidebarItems: ReturnType<typeof getSidebarItemsForRole>;
+  isMobile: boolean;
+  effectiveIsCollapsed: boolean;
+  onClose?: () => void;
+  UserMenuComponent?: React.ComponentType<UserMenuProps>;
+  userMenuSlot?: React.ReactNode;
+}
+
+/**
+ * Sidebar Content Component
+ * Contenuto della sidebar (riutilizzato per mobile e desktop)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function SidebarContent<TUser = any>({
+  config,
+  user,
+  sidebarItems,
+  isMobile,
+  effectiveIsCollapsed,
+  onClose,
+  UserMenuComponent,
+  userMenuSlot,
+}: SidebarContentProps<TUser>) {
+  return (
+    <div className="flex flex-col h-full relative">
+      {/* Logo / Header */}
+      <div
+        className={cn(
+          "flex items-center justify-center h-16 border-b border-border transition-all duration-200",
+          effectiveIsCollapsed ? "px-2" : "px-4"
+        )}
+      >
+        <Link
+          to="/"
+          className="flex items-center gap-1 group transition-all duration-200"
+          onClick={isMobile ? onClose : undefined}
+        >
+          {/* Icon (always visible) */}
+          <Logo
+            size={48}
+            className="group-hover:opacity-80 transition-opacity"
+          />
+
+          {/* Title (hidden when collapsed) */}
+          {!effectiveIsCollapsed && (
+            <Title className="text-xl group-hover:opacity-80 transition-opacity">
+              TalentHive
+            </Title>
+          )}
+        </Link>
+      </div>
+
+      {/* Navigation */}
+      <NavigationMenu
+        items={sidebarItems}
+        isMobile={isMobile}
+        isCollapsed={effectiveIsCollapsed}
+        onItemClick={isMobile ? onClose : undefined}
+        className={cn(
+          "transition-all duration-200",
+          "py-4 px-2" // Stesso padding per entrambi gli stati
+        )}
+        itemClassName={cn(
+          "transition-all duration-200",
+          effectiveIsCollapsed ? "" : "px-3 py-2.5 rounded-md" // Solo padding, no margin
+        )}
+      />
+
+      {/* User Menu Footer (nascosto su mobile, avatar in topbar) */}
+      {config?.showUserMenuInSidebar && user && !effectiveIsCollapsed && (
+        <div className="border-t border-border p-3">
+          {userMenuSlot ? (
+            userMenuSlot
+          ) : UserMenuComponent ? (
+            <UserMenuComponent
+              variant="default"
+              avatarDisplay="initials"
+              subtitleContent="role"
+              dropdownSide="top"
+              dropdownAlign="end"
+              showSettings
+              showProfile={false}
+            />
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * Props per il componente Sidebar
@@ -94,75 +192,6 @@ export function Sidebar<TRole extends string, TUser = any>({
   // perché i tooltip non sono ben supportati su mobile
   const effectiveIsCollapsed = isMobile ? false : isCollapsed;
 
-  /**
-   * Sidebar Content Component
-   * Contenuto della sidebar (riutilizzato per mobile e desktop)
-   */
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full relative">
-      {/* Logo / Header */}
-      <div
-        className={cn(
-          "flex items-center justify-center h-16 border-b border-border transition-all duration-200",
-          effectiveIsCollapsed ? "px-2" : "px-4"
-        )}
-      >
-        <Link
-          to="/"
-          className="flex items-center text-primary hover:text-primary/80 transition-colors"
-          onClick={isMobile ? onClose : undefined}
-        >
-          {config?.logo || <Logo size={48} className="block" />}
-          {config?.logo ? null : (
-            <span
-              className={cn(
-                "font-bold transition-all duration-200",
-                effectiveIsCollapsed ? "hidden" : "text-xl"
-              )}
-            >
-              {config?.title || "App"}
-            </span>
-          )}
-        </Link>
-      </div>
-
-      {/* Navigation */}
-      <NavigationMenu
-        items={sidebarItems}
-        isMobile={isMobile}
-        isCollapsed={effectiveIsCollapsed}
-        onItemClick={isMobile ? onClose : undefined}
-        className={cn(
-          "transition-all duration-200",
-          "py-4 px-2" // Stesso padding per entrambi gli stati
-        )}
-        itemClassName={cn(
-          "transition-all duration-200",
-          effectiveIsCollapsed ? "" : "px-3 py-2.5 rounded-md" // Solo padding, no margin
-        )}
-      />
-
-      {/* User Menu Footer (nascosto su mobile, avatar in topbar) */}
-      {config?.showUserMenuInSidebar && user && !effectiveIsCollapsed && (
-        <div className="border-t border-border p-3">
-          {userMenuSlot ? (
-            userMenuSlot
-          ) : UserMenuComponent ? (
-            <UserMenuComponent
-              variant="default"
-              avatarDisplay="initials"
-              subtitleContent="role"
-              dropdownSide="top"
-              dropdownAlign="end"
-              showSettings
-              showProfile={false}
-            />
-          ) : null}
-        </div>
-      )}
-    </div>
-  );
-
   // Mobile: Sheet overlay
   if (isMobile) {
     return (
@@ -175,7 +204,16 @@ export function Sidebar<TRole extends string, TUser = any>({
               utente
             </SheetDescription>
           </SheetHeader>
-          <SidebarContent />
+          <SidebarContent
+            config={config}
+            user={user}
+            sidebarItems={sidebarItems}
+            isMobile={isMobile}
+            effectiveIsCollapsed={effectiveIsCollapsed}
+            onClose={onClose}
+            UserMenuComponent={UserMenuComponent}
+            userMenuSlot={userMenuSlot}
+          />
         </SheetContent>
       </Sheet>
     );
@@ -192,7 +230,16 @@ export function Sidebar<TRole extends string, TUser = any>({
       className="relative border-r border-border bg-card h-screen transition-all duration-200 ease-in-out"
       style={{ width: `${currentWidth}rem` }}
     >
-      <SidebarContent />
+      <SidebarContent
+        config={config}
+        user={user}
+        sidebarItems={sidebarItems}
+        isMobile={isMobile}
+        effectiveIsCollapsed={effectiveIsCollapsed}
+        onClose={onClose}
+        UserMenuComponent={UserMenuComponent}
+        userMenuSlot={userMenuSlot}
+      />
 
       {/* Toggle Button - solo desktop, non mobile */}
       {!isMobile && onToggleCollapse && (
