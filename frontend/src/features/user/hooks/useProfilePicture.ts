@@ -1,3 +1,5 @@
 export const useProfilePicture = () => {
-  return { profilePictureUrl: "https://github.com/shadcn.png" };
+  // Return null to always show initials in AvatarFallback
+  // TODO: Implement real profile picture upload when needed
+  return { profilePictureUrl: null };
 };
