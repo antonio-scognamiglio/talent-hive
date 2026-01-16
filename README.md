@@ -2,7 +2,7 @@
 
 **Modern Applicant Tracking System (ATS)** - Full-stack monorepo with React 19, Express, Prisma, PostgreSQL, and MinIO.
 
-> Single-tenant CRM-style recruitment platform with Kanban workflow, RBAC, and CV upload.
+> Single-tenant CRM-style recruitment platform with Kanban workflow, RBAC, CV upload, and shared TypeScript types architecture.
 
 ---
 
@@ -11,9 +11,10 @@
 - [Tech Stack](#-tech-stack)
 - [Quick Start](#-quick-start)
 - [Project Structure](#-project-structure)
-- [User Roles](#-user-roles)
+- [User Roles & RBAC](#-user-roles--rbac)
 - [API Overview](#-api-overview)
 - [Development](#-development)
+- [Type System](#-type-system)
 
 ---
 
@@ -21,25 +22,34 @@
 
 ### Frontend
 
-- **React 19** + **TypeScript**
+- **React 19** + **TypeScript 5.9**
 - **Vite 7** (build tool)
 - **TailwindCSS 4** (styling)
-- **TanStack Query** (data fetching)
-- **React Router** (routing with RBAC)
+- **TanStack Query v5** (server state management)
+- **React Router v7** (routing with RBAC)
+- **Shadcn UI** (component library)
+- **Axios** (HTTP client)
 
 ### Backend
 
 - **Node.js** + **Express** (REST API)
-- **Prisma ORM** (database)
+- **Prisma ORM 5.10** (database with type generation)
 - **PostgreSQL** (database)
 - **MinIO** (object storage for CVs)
 - **JWT** (authentication with httpOnly cookies)
 - **Multer** (file upload middleware)
+- **Zod** (validation)
+
+### Shared
+
+- **TypeScript Interfaces** (Prisma → shared types)
+- **DTOs** (Request/Response types)
+- **Prisma Query Types** (Frontend query building)
 
 ### Infrastructure
 
-- **Docker Compose** (local development)
-- **Bun** (package manager)
+- **Docker Compose** (PostgreSQL + MinIO)
+- **Bun** (package manager & runtime)
 
 ---
 
@@ -58,7 +68,21 @@ cd talent-hive
 bun install
 ```
 
-### 2. Start Docker Services
+### 2. Setup Environment Variables
+
+```bash
+# Backend
+cd backend
+cp .env.example .env
+# Edit .env and update DATABASE_URL if needed
+
+# Frontend
+cd ../frontend
+cp .env.example .env
+# Default VITE_API_URL should work for local development
+```
+
+### 3. Start Docker Services
 
 ```bash
 # Start PostgreSQL + MinIO
@@ -69,13 +93,16 @@ docker ps
 # Should see: talent-hive-postgres, talent-hive-minio
 ```
 
-### 3. Setup Database
+### 4. Setup Database
 
 ```bash
 cd backend
 
+# Generate Prisma types (→ shared/types/entities/generated/)
+bunx prisma generate
+
 # Run migrations
-bun run db:migrate
+bun run db:push
 
 # Seed database with test data
 bun run db:seed
@@ -89,7 +116,7 @@ bun run db:seed
 - 5 Jobs (PUBLISHED, DRAFT, ARCHIVED)
 - 6 Applications (various workflow states)
 
-### 4. Start Backend
+### 5. Start Backend
 
 ```bash
 # From backend directory
@@ -99,7 +126,7 @@ bun run dev
 # Health check: http://localhost:3000/health
 ```
 
-### 5. Start Frontend (Optional)
+### 6. Start Frontend
 
 ```bash
 cd frontend
@@ -114,50 +141,70 @@ bun run dev
 
 ```
 talent-hive/
-├── backend/                 # Express API
+├── backend/                    # Express API
 │   ├── prisma/
-│   │   ├── schema.prisma   # Database schema
-│   │   ├── seed.ts         # Test data
-│   │   └── migrations/     # DB migrations
+│   │   ├── schema.prisma      # Database schema + type generator config
+│   │   ├── seed.ts            # Test data
+│   │   └── migrations/        # DB migrations
 │   ├── src/
-│   │   ├── routes/         # API endpoints
-│   │   ├── services/       # Business logic
-│   │   ├── middlewares/    # Auth, RBAC
-│   │   ├── types/          # TypeScript types
-│   │   └── utils/          # Helpers
-│   └── test-api.http       # API tests (REST Client)
+│   │   ├── routes/            # API endpoints
+│   │   ├── services/          # Business logic (RBAC enforcement)
+│   │   ├── middlewares/       # Auth, RBAC
+│   │   ├── types/             # Backend-only types (pagination, etc.)
+│   │   └── utils/             # Helpers
+│   └── test-api.http          # API tests (REST Client)
 │
-├── frontend/               # React app
+├── frontend/                   # React app
 │   └── src/
-│       ├── features/       # Feature-based architecture
-│       └── ...
+│       ├── features/          # Feature-based architecture
+│       │   ├── auth/          # Authentication
+│       │   ├── jobs/          # Jobs feature (in progress)
+│       │   ├── pagination/    # usePaginationForGen hook
+│       │   └── shared/        # Shared components, services, types
+│       └── types/             # Frontend-only types
 │
-├── docker-compose.yml      # PostgreSQL + MinIO
+├── shared/                     # Shared between FE/BE
+│   └── types/                 # TypeScript types (single source of truth)
+│       ├── dto/               # Data Transfer Objects (API contracts)
+│       ├── entities/          # Prisma-generated interfaces
+│       │   └── generated/     # Auto-generated by prisma-generator
+│       └── responses/         # API response types
+│
+├── docker-compose.yml         # PostgreSQL + MinIO
 └── README.md
 ```
 
 ---
 
-## 👥 User Roles
+## 👥 User Roles & RBAC
 
 ### 🔑 ADMIN
 
-- Full access to all resources
+- **Full access** to all resources
 - Can create/manage RECRUITER accounts
 - Bypasses ownership checks
+- **Job visibility**: ALL jobs (any status)
+- **Application visibility**: ALL applications
 
 ### 🕵️ RECRUITER
 
-- Create and publish job postings
-- View applications for **own jobs only**
-- Manage Kanban workflow (NEW → SCREENING → INTERVIEW → OFFER)
-- Hire/Reject candidates
+- **Job visibility**:
+  - ✅ All **PUBLISHED** jobs (marketplace) - including from other recruiters
+  - ✅ Own jobs with **any status** (DRAFT, PUBLISHED, ARCHIVED)
+  - ❌ DRAFT/ARCHIVED jobs from other recruiters
+- **Job management**: Can only create/edit/delete **own jobs**
+- **Application management**: Can only manage applications for **own jobs**
+- Manage Kanban workflow: NEW → SCREENING → INTERVIEW → OFFER
+- Hire/Reject candidates (for own jobs only)
 
 ### 👨‍💼 CANDIDATE
 
-- Browse **PUBLISHED** jobs only
+- **Job visibility**: Only **PUBLISHED** jobs
 - Apply with CV upload (PDF, max 5MB)
 - Track own application status
+- Cannot see other candidates' applications
+
+**RBAC Implementation**: All data filtering happens in **backend services** (not routes). Frontend sends Prisma queries, backend sanitizes based on user role.
 
 ---
 
@@ -166,12 +213,15 @@ talent-hive/
 ### Auth
 
 - `POST /api/auth/login` - Login (sets httpOnly cookie)
-- `POST /api/auth/register` - Register (CANDIDATE self-register)
+- `POST /api/auth/register` - Register (CANDIDATE self-register, role forced)
 - `POST /api/auth/logout` - Logout
+- `GET /api/auth/me` - Get current user
 
 ### Jobs
 
-- `POST /api/jobs/list` - List jobs (RBAC filtered)
+- `POST /api/jobs/list` - **List jobs with Prisma query** (RBAC filtered)
+  - Body: `{ skip?, take?, where?, orderBy?, include? }`
+  - Returns: `{ data: Job[], count: number, query: {...} }`
 - `GET /api/jobs/:id` - Get job by ID
 - `POST /api/jobs` - Create job (RECRUITER/ADMIN)
 - `PATCH /api/jobs/:id` - Update job (owner or ADMIN)
@@ -188,7 +238,9 @@ talent-hive/
 - `POST /api/applications/:id/reject` - Reject candidate
 - `PATCH /api/applications/:id/notes` - Add notes/score
 
-**All endpoints require authentication** (JWT cookie).
+**All endpoints require authentication** (JWT httpOnly cookie).
+
+**Pattern**: `/list` endpoints accept **Prisma query options** for flexible filtering/sorting.
 
 ---
 
@@ -199,17 +251,36 @@ talent-hive/
 ```bash
 cd backend
 
+# Generate TypeScript types (→ shared/types/)
+bunx prisma generate
+
 # Create new migration
-bun run db:migrate dev --name migration_name
+bunx prisma migrate dev --name migration_name
+
+# Push schema without migration (dev only)
+bun run db:push
 
 # Reset database (WARNING: deletes all data)
-bun run db:reset
+bunx prisma migrate reset
 
 # Re-seed with test data
 bun run db:seed
 
 # Open Prisma Studio (database GUI)
 bun run db:studio
+```
+
+### Build Commands
+
+```bash
+# Backend
+cd backend
+bun run build        # TypeScript compilation
+
+# Frontend
+cd frontend
+bun run build        # Vite production build
+bun run preview      # Preview production build
 ```
 
 ### MinIO Access
@@ -229,33 +300,11 @@ docker-compose up -d
 docker-compose down
 
 # View logs
-docker-compose logs -f
+docker-compose logs -f postgres
+docker-compose logs -f minio
 
 # Rebuild containers
 docker-compose up -d --build
-```
-
-### Environment Variables
-
-Backend uses `.env` file:
-
-```env
-# Database
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/talent_hive"
-
-# JWT
-JWT_SECRET="your-super-secret-key-change-in-production"
-JWT_EXPIRES_IN="86400"
-
-# MinIO
-MINIO_ENDPOINT="localhost"
-MINIO_PORT="9000"
-MINIO_ACCESS_KEY="minioadmin"
-MINIO_SECRET_KEY="minioadmin"
-
-# App
-PORT="3000"
-FRONTEND_URL="http://localhost:5173"
 ```
 
 ---
@@ -282,15 +331,86 @@ Content-Type: application/json
   "password": "Sara123!"
 }
 
-### 2. List all jobs (Sara sees all)
+### 2. List Sara's jobs (PUBLISHED + own)
 POST http://localhost:3000/api/jobs/list
 Content-Type: application/json
 
 {
   "skip": 0,
+  "take": 10,
+  "orderBy": { "createdAt": "desc" }
+}
+
+### 3. Filter only Sara's DRAFT jobs
+POST http://localhost:3000/api/jobs/list
+Content-Type: application/json
+
+{
+  "where": { "status": "DRAFT" },
+  "skip": 0,
   "take": 10
 }
 ```
+
+---
+
+## 🏗️ Type System
+
+### Architecture Overview
+
+```
+Prisma Schema (schema.prisma)
+      ↓
+  [prisma generate]
+      ↓
+shared/types/entities/generated/interfaces.ts  ← Auto-generated
+      ↓
+Backend imports from @prisma/client (runtime + types)
+Frontend imports from @shared/types (types only)
+```
+
+### Type Locations
+
+**Generated Types** (never modify):
+
+- `shared/types/entities/generated/interfaces.ts` - Prisma models as TS interfaces
+
+**Shared Types** (manually defined):
+
+- `shared/types/dto/` - Request DTOs (`LoginDto`, `CreateJobDto`, `ListJobsDto`)
+- `shared/types/responses/` - Response types (`AuthResponse`)
+- `shared/types/entities/` - Derived types (`UserWithoutPassword`, `UserProfile`)
+
+**Backend-only Types**:
+
+- `backend/src/types/pagination.types.ts` - `PaginatedResponse<T>` (backend version)
+
+**Frontend-only Types**:
+
+- `frontend/src/types/pagination.types.ts` - `PaginatedResponse<T>` (frontend version)
+- `frontend/src/features/shared/types/prismaQuery.types.ts` - `PrismaQueryOptions<T>` helpers
+
+### Type Generation Workflow
+
+```bash
+# 1. Update Prisma schema
+cd backend
+vim prisma/schema.prisma
+
+# 2. Generate types (outputs to shared/types/)
+bunx prisma generate
+
+# 3. Backend and Frontend now have updated types
+# Backend: @prisma/client + @shared/types
+# Frontend: @shared/types only
+```
+
+### Design Decisions
+
+- **Backend**: Uses `@prisma/client` directly for full Prisma capabilities
+- **Frontend**: Uses pure TS interfaces from `@shared/types` (no Prisma runtime)
+- **DTOs**: Follow Powergiob pattern - simple with `[key: string]: any` for Prisma queries
+- **Separation**: Backend/Frontend pagination types differ in `query` field typing
 
 ---
 
@@ -300,53 +420,58 @@ Content-Type: application/json
 
 **User**
 
-- `role`: ADMIN | RECRUITER | CANDIDATE
-- Stores: email, password (hashed), firstName, lastName
+- `role`: ADMIN | RECRUITER | CANDIDATE (enum)
+- `password`: Hashed with bcrypt
+- Fields: email (unique), firstName, lastName
 
 **Job**
 
-- `status`: DRAFT | PUBLISHED | ARCHIVED
-- `createdBy`: Owner (RECRUITER or ADMIN)
+- `status`: DRAFT | PUBLISHED | ARCHIVED (enum)
+- `createdBy`: Relation to User (owner)
 - Fields: title, description, location, salaryRange
 
 **Application**
 
-- `workflowStatus`: NEW | SCREENING | INTERVIEW | OFFER | DONE
-- `finalDecision`: HIRED | REJECTED (nullable)
+- `workflowStatus`: NEW | SCREENING | INTERVIEW | OFFER | DONE (enum)
+- `finalDecision`: HIRED | REJECTED | null
 - `cvUrl`: Path to CV in MinIO
-- Unique constraint: `[jobId, userId]` (one application per job)
-
----
-
-## 🎯 Business Logic Highlights
-
-### Workflow Separation
-
-- **Internal workflow** (`workflowStatus`): Kanban for recruiters (flexible)
-- **Final decision** (`finalDecision`): Public status for candidates (binary)
-
-### RBAC Rules
-
-- **Job visibility**: CANDIDATE sees only PUBLISHED, RECRUITER sees all (for own jobs), ADMIN sees all
-- **Application management**: Only job owner or ADMIN can hire/reject
-- **CV upload**: CANDIDATE-only, validated (PDF, 5MB max)
-
-### Kanban Rules
-
-- Flexible movement in WIP states (NEW → SCREENING → INTERVIEW → OFFER)
-- `DONE` is terminal (cannot change once HIRED/REJECTED)
+- Unique constraint: `[jobId, userId]` (one application per job per user)
 
 ---
 
 ## 🚧 Roadmap
 
-- [x] Backend API (Auth, Jobs, Applications)
+**Backend** ✅
+
+- [x] REST API (Auth, Jobs, Applications)
 - [x] Database schema with RBAC
 - [x] CV upload to MinIO
-- [ ] Frontend UI with React 19
-- [ ] Kanban board component
+- [x] Type generation to shared folder
+- [x] Security: RBAC enforcement in services
+- [x] Powergiob pattern for query DTOs
+
+**Frontend** 🚧
+
+- [x] Feature-based architecture
+- [x] Authentication flow with RBAC routing
+- [x] Sidebar layout with responsive design
+- [x] Type system integration
+- [x] Service layer (`jobs.service.ts`)
+- [x] `usePaginationForGen` hook
+- [ ] `useJobs` hook (in progress)
+- [ ] Jobs listing page (CANDIDATE view)
+- [ ] Job detail page
+- [ ] Application flow
+- [ ] Kanban board component (RECRUITER)
+- [ ] Admin dashboard
+
+**Future**
+
 - [ ] Email notifications
-- [ ] Advanced search/filtering
+- [ ] Advanced search with filters
+- [ ] Analytics dashboard
+- [ ] Export to CSV/PDF
+- [ ] Multi-language support
 
 ---
 
@@ -359,3 +484,5 @@ MIT
 ## 🤝 Contributing
 
 This is a portfolio/learning project. Feedback welcome!
+
+---
