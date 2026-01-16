@@ -2,18 +2,18 @@ import { cn } from "@/lib/utils";
 
 /**
  * Logo Component
- * Componente riutilizzabile per il logo Lex Nexus
+ * Mostra l'icona esagonale di TalentHive
  *
  * @example
- * <Logo size={32} />
- * <Logo size="h-8 w-8" variant="white" />
+ * <Logo size={48} variant="dark" />
+ * <Logo size={32} variant="light" />
  */
 export interface LogoProps {
-  /** Dimensione del logo. Può essere un numero (in px) o una classe Tailwind (es. "h-8 w-8") */
-  size?: number | string;
+  /** Dimensione del logo (in px) */
+  size?: number;
 
-  /** Variante del logo */
-  variant?: "colored" | "white" | "black";
+  /** Variante colore (dark per sfondi scuri, light per sfondi chiari) */
+  variant?: "dark" | "light";
 
   /** Classi CSS aggiuntive */
   className?: string;
@@ -22,32 +22,18 @@ export interface LogoProps {
   alt?: string;
 }
 
-const LOGO_PATHS = {
-  colored: "/logo/Lex-Nexus-Logo_Colored.png",
-  white: "/logo/Lex-Nexus-Logo_Withe.png",
-  black: "/logo/Lex-Nexus-Logo_Black.png",
-} as const;
-
 export function Logo({
-  size = 32,
-  variant = "colored",
+  size = 48,
+  variant = "dark",
   className,
-  alt = "Lex Nexus Logo",
+  alt = "TalentHive",
 }: LogoProps) {
-  // Se size è un numero, crea style inline. Altrimenti usa come className
-  const sizeStyle =
-    typeof size === "number"
-      ? { width: `${size}px`, height: "auto" }
-      : undefined;
-
-  const sizeClass = typeof size === "string" ? size : undefined;
-
   return (
     <img
-      src={LOGO_PATHS[variant]}
+      src={`/logo/TalentHive-Icon-${variant === "dark" ? "Dark" : "Light"}.png`}
       alt={alt}
-      className={cn(sizeClass, className)}
-      style={sizeStyle}
+      className={cn("object-contain", className)}
+      style={{ height: `${size}px`, width: "auto" }}
     />
   );
 }
