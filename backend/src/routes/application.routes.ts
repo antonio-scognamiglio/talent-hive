@@ -3,7 +3,7 @@ import { Router } from "express";
 import multer from "multer";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { applicationService } from "../services/application.service";
-import type { ApplicationListQuery } from "../services/application.service";
+import type { ListApplicationsDto } from "@shared/types";
 
 const router = Router();
 
@@ -29,7 +29,7 @@ const upload = multer({
  */
 router.post("/list", authMiddleware, async (req, res) => {
   try {
-    const query: ApplicationListQuery = req.body;
+    const query: ListApplicationsDto = req.body;
     const result = await applicationService.getApplications(query, req.user!);
     res.json(result);
   } catch (error) {
