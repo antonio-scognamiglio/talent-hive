@@ -12,6 +12,7 @@ import { AxiosError, type AxiosResponse } from "axios";
 import type { PrismaQueryOptions } from "@/features/shared/types/prismaQuery.types";
 import type { ApiFunctionForGen } from "@/features/shared/types/api.types";
 import type { PaginatedResponse } from "@/features/shared/types/pagination.types";
+import type { QueryKeyFactory } from "@/features/shared/types/queryKeys.types";
 
 // Base props senza transformData
 export interface UsePaginationForGenProps<T, TBody = any, TPath = any> {
@@ -22,9 +23,17 @@ export interface UsePaginationForGenProps<T, TBody = any, TPath = any> {
   apiFunction: ApiFunctionForGen<any, TBody, TPath>;
   pathParams?: Record<string, any>; // Parametri per il path dell'API (es. { firmId, clientId })
   validateData?: (data: T[]) => boolean;
-  onError?: (error: Error) => void; // Aggiungi questa riga
+  onError?: (error: Error) => void;
   cacheDisabled?: boolean;
   skipDataLog?: boolean;
+  /**
+   * Query key factory function for generating cache keys
+   * Replaces the old apiFunction.name pattern for more flexibility
+   *
+   * @example
+   * queryKeyFactory: queryKeys.jobs.list
+   */
+  queryKeyFactory: QueryKeyFactory;
 }
 
 // Tipo restituito
@@ -45,15 +54,15 @@ export interface UsePaginationForGenReturn<T> {
   handlePageClick: (page: number) => void;
   cacheDisabled?: boolean;
   /**
-   * Query key base per invalidare tutte le varianti di questa query.
-   * Usa questa query key con queryClient.invalidateQueries() per invalidare
-   * tutte le pagine e varianti di questa lista.
-   *
-   * Formato: ["pagination", apiFunction.name]
+   * Query key for this specific query (with params)
+   * Use for targeted invalidation of this exact query
    *
    * @example
-   * const { queryKey } = usePaginationForGen({ ... });
-   * queryClient.invalidateQueries({ queryKey });
+   * queryClient.invalidateQueries({ queryKey })
+   *
+   * @example
+   * // To invalidate all variants, use the factory without params:
+   * queryClient.invalidateQueries({ queryKey: queryKeys.jobs.list() })
    */
   queryKey: QueryKey;
 }
@@ -115,6 +124,7 @@ export function usePaginationForGen<T, TBody = any, TPath = any>({
   onError,
   cacheDisabled = false,
   skipDataLog = true,
+  queryKeyFactory,
 }: UsePaginationForGenProps<T, TBody>): UsePaginationForGenReturn<T> {
   const [skip, setSkip] = useState<number>((initialPage - 1) * pageSize);
   const [totalPages, setTotalPages] = useState<number>(0);
@@ -151,17 +161,14 @@ export function usePaginationForGen<T, TBody = any, TPath = any>({
     };
   }, [requestBody, requestPath]);
 
-  // Query key base per invalidare tutte le varianti di questa query
-  // Usa solo ["pagination", apiFunction.name] per matchare tutte le pagine e filtri
-  const baseQueryKey: QueryKey = useMemo(
-    () => ["pagination", apiFunction.name],
-    [apiFunction.name]
-  );
-
-  // Query key completa per questa specifica query (con body e path params)
-  const fullQueryKey = useMemo(
-    () => [...baseQueryKey, requestBody, pathParams] as const,
-    [baseQueryKey, requestBody, pathParams]
+  // Query key per questa specifica query (con body e path params)
+  const queryKey: QueryKey = useMemo(
+    () =>
+      queryKeyFactory({
+        body: requestBody as Record<string, unknown>,
+        path: requestPath as Record<string, unknown>,
+      }),
+    [queryKeyFactory, requestBody, requestPath]
   );
 
   const {
@@ -172,7 +179,7 @@ export function usePaginationForGen<T, TBody = any, TPath = any>({
     error,
     refetch,
   } = useQuery({
-    queryKey: fullQueryKey,
+    queryKey,
     queryFn: async () => {
       const response: AxiosResponse<PaginatedResponse<T>> | AxiosError =
         await apiFunction(queryOptions);
@@ -264,6 +271,6 @@ export function usePaginationForGen<T, TBody = any, TPath = any>({
     nextPage,
     prevPage,
     handlePageClick,
-    queryKey: baseQueryKey,
+    queryKey,
   };
 }

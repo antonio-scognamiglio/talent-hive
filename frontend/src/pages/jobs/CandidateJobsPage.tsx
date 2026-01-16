@@ -2,7 +2,6 @@
  * CandidateJobsPage
  *
  * Job marketplace for candidates.
- * Placeholder for MVP - will contain job listing, search, and application functionality.
  */
 export default function CandidateJobsPage() {
   return (
