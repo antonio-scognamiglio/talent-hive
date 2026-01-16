@@ -12,15 +12,16 @@ export const jobsService = {
    * List jobs with pagination and filters
    * POST /api/jobs/list
    *
-   * @param query - Prisma query options (where, orderBy, include, skip, take, etc.)
+   * @param options - API options with body containing Prisma query
    * @returns Paginated list of jobs
    */
-  listJobs: async (
-    query: PrismaQueryOptions<Job>
-  ): Promise<PaginatedResponse<Job>> => {
+  listJobs: async (options: {
+    body: PrismaQueryOptions<Job>;
+    path?: Record<string, unknown>;
+  }): Promise<PaginatedResponse<Job>> => {
     const response = await apiClient.post<PaginatedResponse<Job>>(
       "/jobs/list",
-      query
+      options.body
     );
     return response.data;
   },
