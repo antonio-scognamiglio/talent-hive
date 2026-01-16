@@ -5,17 +5,17 @@ services:
     image: postgres:latest
     container_name: talenthive-postgres
     environment:
-      POSTGRES_USER: tony
-      POSTGRES_PASSWORD: mysecret
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: talent_hive
     ports:
-      - "5432:5432" # Porta esterna 5433 per evitare conflitti
+      - "5432:5432"
     volumes:
       - talenthive_postgres_data:/var/lib/postgresql/data
     networks:
       - talenthive-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tony"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
