@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2016",
+    "target": "ES2018",
     "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "./dist",
@@ -13,5 +13,11 @@
       "@shared/*": ["../shared/*"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "prisma/**/*"],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs",
+      "types": ["node"]
+    }
+  }
 }
