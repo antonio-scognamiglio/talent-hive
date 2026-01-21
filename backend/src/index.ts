@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import jobRoutes from "./routes/job.routes";
 import applicationRoutes from "./routes/application.routes";
+import userRoutes from "./routes/user.routes";
 import { config } from "./config/config";
 
 const app = express();
@@ -14,7 +15,7 @@ app.use(
   cors({
     origin: config.app.frontendUrl, // ✅ Da config invece di hardcoded
     credentials: true, // Permette invio cookie cross-origin
-  })
+  }),
 );
 app.use(express.json());
 app.use(cookieParser()); // Parse cookies
@@ -23,6 +24,7 @@ app.use(cookieParser()); // Parse cookies
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date() });
@@ -30,7 +32,7 @@ app.get("/health", (req, res) => {
 
 app.listen(config.app.port, () => {
   console.log(
-    `✅ [server]: Server running at http://localhost:${config.app.port}`
+    `✅ [server]: Server running at http://localhost:${config.app.port}`,
   );
   console.log(`📝 [cors]: Frontend allowed from ${config.app.frontendUrl}`);
 });
