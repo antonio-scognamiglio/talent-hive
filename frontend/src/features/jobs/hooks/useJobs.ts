@@ -64,7 +64,7 @@ export const useJobs = ({
       if (config.createJob?.showErrorToast) {
         handleError(
           error,
-          "Si è verificato un errore durante la creazione dell'annuncio"
+          "Si è verificato un errore durante la creazione dell'annuncio",
         );
       }
     },
@@ -87,7 +87,7 @@ export const useJobs = ({
       if (config.updateJob?.showErrorToast) {
         handleError(
           error,
-          "Si è verificato un errore durante la creazione dell'annuncio"
+          "Si è verificato un errore durante la creazione dell'annuncio",
         );
       }
     },
@@ -109,7 +109,7 @@ export const useJobs = ({
       if (config.deleteJob?.showErrorToast) {
         handleError(
           error,
-          "Si è verificato un errore durante l'eliminazione dell'annuncio"
+          "Si è verificato un errore durante l'eliminazione dell'annuncio",
         );
       }
     },

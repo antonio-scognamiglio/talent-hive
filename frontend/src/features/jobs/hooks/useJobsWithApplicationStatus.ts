@@ -41,7 +41,7 @@ export const useJobsWithApplicationStatus = (props?: UseJobsProps) => {
   // Create Set for O(1) lookup performance
   const appliedJobIds = useMemo(
     () => new Set(myApplications?.map((app) => app.jobId) || []),
-    [myApplications]
+    [myApplications],
   );
 
   // Enrich each job with application status
@@ -52,7 +52,7 @@ export const useJobsWithApplicationStatus = (props?: UseJobsProps) => {
         hasApplied: appliedJobIds.has(job.id),
         myApplication: myApplications?.find((app) => app.jobId === job.id),
       })) || [],
-    [jobsQuery.getJobsPaginatedQuery.data, appliedJobIds, myApplications]
+    [jobsQuery.getJobsPaginatedQuery.data, appliedJobIds, myApplications],
   );
 
   return {
