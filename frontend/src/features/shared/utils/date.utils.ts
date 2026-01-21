@@ -60,3 +60,29 @@ export function formatDate(
 
   return format(normalized, formatStr);
 }
+
+/**
+ * Formats a date for HTML input type="date" (YYYY-MM-DD)
+ * @param date - Date to format
+ * @returns Date string in YYYY-MM-DD format or empty string
+ */
+export function formatDateForInput(
+  date: string | Date | null | undefined,
+): string {
+  const normalized = normalizeDate(date);
+  if (!normalized) return "";
+  return format(normalized, "yyyy-MM-dd");
+}
+
+/**
+ * Parses a date string from HTML input type="date" to a local Date object
+ * @param dateString - Date string in YYYY-MM-DD format
+ * @returns Date object or undefined if invalid
+ */
+export function parseDateInputToLocal(dateString: string): Date | undefined {
+  if (!dateString) return undefined;
+  // Create date parts to avoid timezone issues with default parsing
+  const [year, month, day] = dateString.split("-").map(Number);
+  if (!year || !month || !day) return undefined;
+  return new Date(year, month - 1, day);
+}
