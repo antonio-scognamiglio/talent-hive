@@ -1,5 +1,5 @@
 import { prisma } from "../libs/prisma";
-import type { Job, JobStatus } from "@prisma/client";
+import type { Job, JobStatus, Prisma } from "@prisma/client";
 import type {
   CreateJobDto,
   UpdateJobDto,
@@ -7,6 +7,11 @@ import type {
   UserWithoutPassword,
 } from "@shared/types";
 import type { PaginatedResponse } from "../types/pagination.types";
+import { sanitizePrismaQuery } from "../utils/sanitize-prisma-query.util";
+import {
+  addORConstraints,
+  setQueryDefaults,
+} from "../utils/prisma-query.utils";
 
 class JobService {
   /**
@@ -15,76 +20,41 @@ class JobService {
    */
   async getJobs(
     incomingQuery: ListJobsDto,
-    user: UserWithoutPassword
+    user: UserWithoutPassword,
   ): Promise<PaginatedResponse<Job>> {
-    // Reassign to Prisma type for type safety
-    const query: any = { ...incomingQuery };
-    const { skip = 0, take = 10, where = {}, orderBy } = query;
+    // Sanitize entire query: limits include depth + caps pagination
+    let safeQuery: Prisma.JobFindManyArgs = sanitizePrismaQuery(incomingQuery, {
+      maxIncludeDepth: 1,
+      maxTake: 100,
+    });
 
-    // Build safe where clause from scratch (NEVER copy where as-is!)
-    const safeWhere: any = {};
+    const where = safeQuery.where || {};
 
-    // RBAC: Enforce data visibility based on role
+    // RBAC: Override where clause based on role
     if (user.role === "CANDIDATE") {
-      // CANDIDATE: Only PUBLISHED jobs
-      safeWhere.status = "PUBLISHED";
+      // CANDIDATE: Force PUBLISHED status
+      safeQuery.where = { ...where, status: "PUBLISHED" };
     } else if (user.role === "RECRUITER") {
-      // RECRUITER: Can VIEW all PUBLISHED jobs (marketplace) + their own jobs (any status)
-      // But can only MODIFY their own jobs (checked in update/delete methods)
-      safeWhere.OR = [
-        { status: "PUBLISHED" }, // All published jobs (marketplace)
-        { createdById: user.id }, // Their own jobs (any status)
-      ];
-
-      // If filtering by specific status on their OWN jobs
-      if (where?.status) {
-        // Override: show only their jobs with that status
-        delete safeWhere.OR;
-        safeWhere.createdById = user.id;
-        safeWhere.status = where.status;
-      }
-    } else if (user.role === "ADMIN") {
-      // ADMIN: Can see all, optional status filter
-      if (where?.status) {
-        safeWhere.status = where.status;
-      }
+      // RECRUITER: PUBLISHED jobs OR own jobs
+      // Use utility to intelligently combine with existing filters
+      safeQuery.where = addORConstraints(where, [
+        { status: "PUBLISHED" },
+        { createdById: user.id },
+      ]);
     }
+    // ADMIN: No restrictions
 
-    // Safe filters allowed for all roles (on their visible jobs)
-    if (where?.title) {
-      safeWhere.title = {
-        contains:
-          typeof where.title === "string" ? where.title : where.title.contains,
-        mode: "insensitive",
-      };
-    }
-    if (where?.location) {
-      safeWhere.location = {
-        contains:
-          typeof where.location === "string"
-            ? where.location
-            : where.location.contains,
-        mode: "insensitive",
-      };
-    }
-
-    // Sanitize orderBy (default to createdAt desc)
-    const safeOrderBy = orderBy?.createdAt
-      ? { createdAt: orderBy.createdAt }
-      : { createdAt: "desc" as const };
-
-    // Build final query
-    const safeQuery = {
-      where: safeWhere,
-      orderBy: safeOrderBy,
-      skip,
-      take: Math.min(take, 100), // Max 100 per query
-    };
+    // Set defaults using utility
+    safeQuery = setQueryDefaults(safeQuery, {
+      skip: 0,
+      take: 10,
+      orderBy: { createdAt: "desc" as const },
+    });
 
     // Execute query
     const [data, count] = await Promise.all([
       prisma.job.findMany(safeQuery),
-      prisma.job.count({ where: safeWhere }),
+      prisma.job.count({ where: safeQuery.where }),
     ]);
 
     return {
@@ -135,7 +105,7 @@ class JobService {
   async updateJob(
     id: string,
     data: UpdateJobDto,
-    user: UserWithoutPassword
+    user: UserWithoutPassword,
   ): Promise<Job> {
     const job = await prisma.job.findUnique({
       where: { id },

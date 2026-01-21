@@ -1,9 +1,5 @@
 import { prisma } from "../libs/prisma";
-import type {
-  Application,
-  WorkflowStatus,
-  FinalDecision,
-} from "@prisma/client";
+import type { Application, WorkflowStatus, Prisma } from "@prisma/client";
 import type {
   UserWithoutPassword,
   CreateApplicationDto,
@@ -11,6 +7,11 @@ import type {
 } from "@shared/types";
 import type { PaginatedResponse } from "../types/pagination.types";
 import { storageService } from "./storage.service";
+import { sanitizePrismaQuery } from "../utils/sanitize-prisma-query.util";
+import {
+  removeRestrictedFields,
+  setQueryDefaults,
+} from "../utils/prisma-query.utils";
 
 class ApplicationService {
   /**
@@ -18,61 +19,75 @@ class ApplicationService {
    * RBAC: CANDIDATE sees only their own, RECRUITER sees for their jobs, ADMIN sees all
    */
   async getApplications(
-    query: ListApplicationsDto,
-    user: UserWithoutPassword
+    incomingQuery: ListApplicationsDto,
+    user: UserWithoutPassword,
   ): Promise<PaginatedResponse<Application>> {
-    const { skip = 0, take = 10, where } = query;
+    // Sanitize query with include depth limit and pagination cap
+    let safeQuery: Prisma.ApplicationFindManyArgs = sanitizePrismaQuery(
+      incomingQuery,
+      { maxIncludeDepth: 1, maxTake: 100 },
+    );
 
-    const safeWhere: any = {};
+    const where = safeQuery.where || {};
 
+    // RBAC: Override where clause based on role
     if (user.role === "CANDIDATE") {
       // Force: only user's own applications
-      safeWhere.userId = user.id;
+      // Remove sensitive fields that candidates shouldn't filter on
+      const candidateSafeWhere = removeRestrictedFields(where, [
+        "workflowStatus",
+        "finalDecision",
+        "score",
+        "notes",
+      ]);
+      safeQuery.where = { ...candidateSafeWhere, userId: user.id };
     } else if (user.role === "RECRUITER") {
       // Filter by jobs created by this recruiter
       if (where?.jobId) {
         // Check ownership
         const job = await prisma.job.findUnique({
-          where: { id: where.jobId },
+          where: { id: where.jobId as string },
         });
         if (job && job.createdById !== user.id) {
           throw new Error("You can only view applications for your jobs");
         }
-        safeWhere.jobId = where.jobId;
+        safeQuery.where = { ...where, jobId: where.jobId };
       } else {
         // Get all applications for recruiter's jobs
-        safeWhere.job = {
-          createdById: user.id,
+        safeQuery.where = {
+          ...where,
+          job: {
+            createdById: user.id,
+          },
         };
       }
     }
-    // ADMIN: no filter (sees all)
+    // ADMIN: No restrictions (all filters pass through)
 
-    // Safe filters (allowed for all)
-    if (where?.workflowStatus) {
-      safeWhere.workflowStatus = where.workflowStatus;
-    }
+    // Set defaults using utility
+    safeQuery = setQueryDefaults(safeQuery, {
+      skip: 0,
+      take: 10,
+      orderBy: { createdAt: "desc" as const },
+    });
+
+    // Ensure include is set (needed for job and user data)
+    safeQuery.include = {
+      job: { select: { id: true, title: true, location: true } },
+      user: {
+        select: { id: true, email: true, firstName: true, lastName: true },
+      },
+    };
 
     const [data, count] = await Promise.all([
-      prisma.application.findMany({
-        where: safeWhere,
-        skip,
-        take: Math.min(take, 100),
-        include: {
-          job: { select: { id: true, title: true, location: true } },
-          user: {
-            select: { id: true, email: true, firstName: true, lastName: true },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.application.count({ where: safeWhere }),
+      prisma.application.findMany(safeQuery),
+      prisma.application.count({ where: safeQuery.where }),
     ]);
 
     return {
       data,
       count,
-      query: { where: safeWhere, skip, take },
+      query: safeQuery,
     };
   }
 
@@ -94,7 +109,7 @@ class ApplicationService {
    */
   async getApplicationById(
     id: string,
-    user: UserWithoutPassword
+    user: UserWithoutPassword,
   ): Promise<Application> {
     const application = await prisma.application.findUnique({
       where: { id },
@@ -130,7 +145,7 @@ class ApplicationService {
     data: CreateApplicationDto,
     cvBuffer: Buffer,
     cvOriginalName: string,
-    userId: string
+    userId: string,
   ): Promise<Application> {
     // Check if already applied
     const existing = await prisma.application.findUnique({
@@ -163,7 +178,7 @@ class ApplicationService {
     const cvUrl = await storageService.uploadFile(
       cvBuffer,
       `cvs/${userId}/${data.jobId}/${cvOriginalName}`,
-      "application/pdf"
+      "application/pdf",
     );
 
     // Create application
@@ -188,7 +203,7 @@ class ApplicationService {
   async updateWorkflowStatus(
     id: string,
     newStatus: WorkflowStatus,
-    user: UserWithoutPassword
+    user: UserWithoutPassword,
   ): Promise<Application> {
     const application = await prisma.application.findUnique({
       where: { id },
@@ -220,7 +235,7 @@ class ApplicationService {
    */
   async hireCandidate(
     id: string,
-    user: UserWithoutPassword
+    user: UserWithoutPassword,
   ): Promise<Application> {
     const application = await prisma.application.findUnique({
       where: { id },
@@ -255,7 +270,7 @@ class ApplicationService {
   async rejectCandidate(
     id: string,
     reason: string | undefined,
-    user: UserWithoutPassword
+    user: UserWithoutPassword,
   ): Promise<Application> {
     const application = await prisma.application.findUnique({
       where: { id },
@@ -292,7 +307,7 @@ class ApplicationService {
     id: string,
     notes: string | undefined,
     score: number | undefined,
-    user: UserWithoutPassword
+    user: UserWithoutPassword,
   ): Promise<Application> {
     const application = await prisma.application.findUnique({
       where: { id },
