@@ -5,6 +5,8 @@ export * from "./entities/generated/interfaces";
 export * from "./dto/auth.dto";
 export * from "./dto/job.dto";
 export * from "./dto/application.dto";
+export * from "./dto/user.dto";
+export * from "./dto/common.dto";
 
 // Entities (derived types)
 export * from "./entities/user.types";
