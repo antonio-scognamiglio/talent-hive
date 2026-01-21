@@ -47,7 +47,7 @@ export interface UsePaginationForGenReturn<T> {
   totalPages: number;
   totalItems: number;
   refetch: (
-    options?: RefetchOptions
+    options?: RefetchOptions,
   ) => Promise<QueryObserverResult<PaginatedResponse<T>, Error>>;
   nextPage: () => void;
   prevPage: () => void;
@@ -168,7 +168,7 @@ export function usePaginationForGen<T, TBody = any, TPath = any>({
         body: requestBody as Record<string, unknown>,
         path: requestPath as Record<string, unknown>,
       }),
-    [queryKeyFactory, requestBody, requestPath]
+    [queryKeyFactory, requestBody, requestPath],
   );
 
   const {
@@ -181,11 +181,15 @@ export function usePaginationForGen<T, TBody = any, TPath = any>({
   } = useQuery({
     queryKey,
     queryFn: async () => {
+      // apiFunction returns AxiosResponse<PaginatedResponse<T>>
+      // We need to extract response.data to get PaginatedResponse
       const response: AxiosResponse<PaginatedResponse<T>> | AxiosError =
         await apiFunction(queryOptions);
+
       if (response instanceof AxiosError) {
         throw response;
       }
+
       if (!skipDataLog) {
         console.log(`${apiFunction.name}:`, response.data?.data);
       }
@@ -193,14 +197,16 @@ export function usePaginationForGen<T, TBody = any, TPath = any>({
       if (validateData && !validateData(response.data.data)) {
         console.error(
           `usePagination - Validation failed for ${apiFunction.name}, input data:`,
-          response.data
+          response.data,
         );
         throw new Error(
           `Validation failed, ListType: ${
             apiFunction.name
-          }, input data: ${JSON.stringify(response.data.data)}`
+          }, input data: ${JSON.stringify(response.data.data)}`,
         );
       }
+
+      // Return PaginatedResponse (response.data)
       return response.data;
     },
     enabled,
@@ -226,7 +232,7 @@ export function usePaginationForGen<T, TBody = any, TPath = any>({
       }
       setSkip((page - 1) * pageSize);
     },
-    [pageSize, skipDataLog]
+    [pageSize, skipDataLog],
   );
 
   // Reset skip to 0 (page 1) when pageSize changes

@@ -2,10 +2,12 @@ import type { PrismaQueryOptions } from "@/features/shared/types/prismaQuery.typ
 import type { PaginatedResponse } from "@/features/shared/types/pagination.types";
 import { apiClient } from "../api/client";
 import type { Job, CreateJobDto, UpdateJobDto } from "@shared/types";
+import type { AxiosResponse } from "axios";
 
 /**
  * Jobs API Service
  * Handles all job-related API calls
+ * Returns full AxiosResponse for access to headers, status, etc.
  */
 export const jobsService = {
   /**
@@ -13,17 +15,16 @@ export const jobsService = {
    * POST /api/jobs/list
    *
    * @param options - API options with body containing Prisma query
-   * @returns Paginated list of jobs
+   * @returns Full AxiosResponse with PaginatedResponse in .data
    */
   listJobs: async (options: {
     body: PrismaQueryOptions<Job>;
     path?: Record<string, unknown>;
-  }): Promise<PaginatedResponse<Job>> => {
-    const response = await apiClient.post<PaginatedResponse<Job>>(
+  }): Promise<AxiosResponse<PaginatedResponse<Job>>> => {
+    return await apiClient.post<PaginatedResponse<Job>>(
       "/jobs/list",
-      options.body
+      options.body,
     );
-    return response.data;
   },
 
   /**
@@ -31,11 +32,10 @@ export const jobsService = {
    * GET /api/jobs/:id
    *
    * @param id - Job ID
-   * @returns Job details
+   * @returns Full AxiosResponse with Job in .data
    */
-  getJob: async (id: string): Promise<Job> => {
-    const response = await apiClient.get<Job>(`/jobs/${id}`);
-    return response.data;
+  getJob: async (id: string): Promise<AxiosResponse<Job>> => {
+    return await apiClient.get<Job>(`/jobs/${id}`);
   },
 
   /**
@@ -43,11 +43,10 @@ export const jobsService = {
    * POST /api/jobs
    *
    * @param data - Job creation data
-   * @returns Created job
+   * @returns Full AxiosResponse with created Job in .data
    */
-  createJob: async (data: CreateJobDto): Promise<Job> => {
-    const response = await apiClient.post<Job>("/jobs", data);
-    return response.data;
+  createJob: async (data: CreateJobDto): Promise<AxiosResponse<Job>> => {
+    return await apiClient.post<Job>("/jobs", data);
   },
 
   /**
@@ -56,11 +55,13 @@ export const jobsService = {
    *
    * @param id - Job ID
    * @param data - Job update data
-   * @returns Updated job
+   * @returns Full AxiosResponse with updated Job in .data
    */
-  updateJob: async (id: string, data: UpdateJobDto): Promise<Job> => {
-    const response = await apiClient.patch<Job>(`/jobs/${id}`, data);
-    return response.data;
+  updateJob: async (
+    id: string,
+    data: UpdateJobDto,
+  ): Promise<AxiosResponse<Job>> => {
+    return await apiClient.patch<Job>(`/jobs/${id}`, data);
   },
 
   /**
@@ -68,10 +69,9 @@ export const jobsService = {
    * DELETE /api/jobs/:id
    *
    * @param id - Job ID
-   * @returns Archived job
+   * @returns Full AxiosResponse with archived Job in .data
    */
-  deleteJob: async (id: string): Promise<Job> => {
-    const response = await apiClient.delete<Job>(`/jobs/${id}`);
-    return response.data;
+  deleteJob: async (id: string): Promise<AxiosResponse<Job>> => {
+    return await apiClient.delete<Job>(`/jobs/${id}`);
   },
 };

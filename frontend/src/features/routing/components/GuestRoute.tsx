@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 // Fix import path to match where we created the placeholder
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
-import { AuthLoadingFallback } from "./LoadingFallback";
+import { LoadingFallback } from "./LoadingFallback";
 
 interface GuestRouteProps {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ export function GuestRoute({
   const { user, isCheckingAuth } = useAuthContext();
 
   if (!user && isCheckingAuth) {
-    return onLoading ? onLoading() : <AuthLoadingFallback />;
+    return onLoading ? onLoading() : <LoadingFallback />;
   }
 
   if (user) {

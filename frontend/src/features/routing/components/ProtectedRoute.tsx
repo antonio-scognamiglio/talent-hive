@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { Scale } from "lucide-react";
-import { AuthLoadingFallback } from "./LoadingFallback";
+import { LoadingFallback } from "./LoadingFallback";
 
 /**
  * Props per il componente ProtectedRoute
@@ -75,7 +75,7 @@ export function ProtectedRoute<TRole extends string>({
 
   // Loading solo se stiamo ancora controllando E non abbiamo ancora un ruolo
   if (!currentUserRole && isCheckingAuth) {
-    return onLoading ? onLoading() : <AuthLoadingFallback />;
+    return onLoading ? onLoading() : <LoadingFallback />;
   }
 
   // Se arriviamo qui, significa che currentUserRole esiste → controlla permessi

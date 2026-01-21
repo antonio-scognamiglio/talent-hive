@@ -25,7 +25,7 @@ interface RoleBasedRouterProps<TRole extends string, TUser> {
   /** Wrapper per applicare layout alle rotte */
   layoutWrapper?: (
     children: React.ReactNode,
-    route: RouteConfig<TRole>
+    route: RouteConfig<TRole>,
   ) => React.ReactNode;
 
   /** Path di redirect se non autenticato */

@@ -1,29 +1,119 @@
+import { JobCardCandidate } from "@/features/jobs/components";
+import {
+  useJobsWithApplicationStatus,
+  type JobWithApplicationStatus,
+} from "@/features/jobs/hooks/useJobsWithApplicationStatus";
+import { PaginationWrapperStyled } from "@/features/pagination/components";
+import {
+  PAGE_SIZES,
+  type PageSize,
+} from "@/features/pagination/constants/page-sizes";
+import { EmptyState, Spinner } from "@/features/shared/components";
+import { PageContent, PageHeader } from "@/features/shared/components/layout";
+import { Briefcase } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 /**
  * CandidateJobsPage
  *
  * Job marketplace for candidates.
  */
 export default function CandidateJobsPage() {
-  return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Available Jobs</h1>
+  const [pageSize, setPageSize] = useState<PageSize>(
+    PAGE_SIZES.DEFAULT_PAGE_SIZE,
+  );
 
-      <div className="rounded-lg border-2 border-dashed border-muted p-12 text-center">
-        <div className="mx-auto max-w-md">
-          <h3 className="text-lg font-semibold mb-2">
-            Job Marketplace Coming Soon
-          </h3>
-          <p className="text-muted-foreground mb-4">
-            Browse and apply to open positions from your dashboard
-          </p>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p>• Search jobs by title and location</p>
-            <p>• View job details and requirements</p>
-            <p>• Submit applications with CV upload</p>
-            <p>• Track your application status</p>
-          </div>
-        </div>
-      </div>
-    </div>
+  const {
+    jobs,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    currentPage,
+    totalPages,
+    nextPage,
+    prevPage,
+    handlePageClick,
+    totalItems,
+  } = useJobsWithApplicationStatus({ pageSize });
+
+  const navigate = useNavigate();
+
+  const handlePageSizeChange = useCallback((value: number) => {
+    setPageSize(value as PageSize);
+  }, []);
+
+  const handleViewJob = useCallback(
+    (job: JobWithApplicationStatus) => {
+      navigate(`/jobs/${job.id}`);
+    },
+    [navigate],
+  );
+
+  return (
+    <PageContent>
+      <PageHeader
+        title="Jobs Marketplace"
+        subtitle="Cerca e candidati per le opportunità di lavoro"
+      />
+      <PaginationWrapperStyled<JobWithApplicationStatus>
+        data={jobs}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        refetch={refetch}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        nextPage={nextPage}
+        prevPage={prevPage}
+        handlePageClick={handlePageClick}
+        pageSizeConfig={{
+          value: pageSize,
+          onValueChange: handlePageSizeChange,
+          label: "Per pagina",
+        }}
+        totalItemsConfig={
+          totalItems !== undefined
+            ? {
+                totalItems,
+                singularText: "job",
+                pluralText: "jobs",
+              }
+            : undefined
+        }
+      >
+        {({ data: paginatedJobs, isLoading: isLoadingData }) => (
+          <>
+            {isLoadingData ? (
+              <Spinner
+                size="lg"
+                showMessage
+                message="Caricamento annunci..."
+                className="py-12"
+              />
+            ) : paginatedJobs.length === 0 ? (
+              <EmptyState
+                icon={<Briefcase />}
+                title={"Nessun annuncio trovato"}
+                description={
+                  "Prova a cambiare i filtri o attendi che venga pubblicato un nuovo annuncio"
+                }
+              />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedJobs.map((job) => (
+                  <JobCardCandidate
+                    key={job.id}
+                    job={job}
+                    onView={handleViewJob}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </PaginationWrapperStyled>
+    </PageContent>
   );
 }
