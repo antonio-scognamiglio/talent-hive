@@ -1,4 +1,5 @@
 import type { JobStatus } from "../entities/generated/interfaces";
+import type { BaseListDto } from "./common.dto";
 
 /**
  * DTO for creating a new job
@@ -19,9 +20,6 @@ export interface UpdateJobDto extends Partial<CreateJobDto> {
 
 /**
  * DTO for listing/filtering jobs
+ * Extends universal BaseListDto for flexibility
  */
-export interface ListJobsDto {
-  skip?: number;
-  take?: number;
-  [key: string]: any; // Supports all Prisma query options (where, orderBy, include, select, etc.)
-}
+export interface ListJobsDto extends BaseListDto {}
