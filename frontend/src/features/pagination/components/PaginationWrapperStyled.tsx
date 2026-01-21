@@ -91,7 +91,7 @@ export function PaginationWrapperStyled<T>({
       ? {
           totalItems: totalItemsConfig.totalItems,
           display: totalItemsConfig.display ?? "badge",
-          showTotalLabel: totalItemsConfig.showTotalLabel ?? true,
+          showTotalLabel: totalItemsConfig.showTotalLabel,
           label: (count) =>
             `${count} ${
               count === 1
