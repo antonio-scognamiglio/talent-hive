@@ -57,7 +57,8 @@
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) installed (`curl -fsSL https://bun.sh/install | bash`)
+- **Node.js 18+** (required)
+- **Package Manager**: [Bun](https://bun.sh) (recommended), npm, yarn, or pnpm
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) running
 
 ### 1. Clone and Install
