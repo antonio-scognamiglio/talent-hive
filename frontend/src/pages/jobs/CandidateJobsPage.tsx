@@ -3,16 +3,25 @@ import {
   useJobsWithApplicationStatus,
   type JobWithApplicationStatus,
 } from "@/features/jobs/hooks/useJobsWithApplicationStatus";
+import { useJobFilters } from "@/features/jobs/hooks/useJobFilters";
 import { PaginationWrapperStyled } from "@/features/pagination/components";
 import {
   PAGE_SIZES,
   type PageSize,
 } from "@/features/pagination/constants/page-sizes";
-import { EmptyState, Spinner } from "@/features/shared/components";
+import {
+  EmptyState,
+  Spinner,
+  Toolbar,
+  RefreshButton,
+} from "@/features/shared/components";
+import { SearchInput } from "@/features/shared/components/filters";
 import { PageContent, PageHeader } from "@/features/shared/components/layout";
 import { Briefcase } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { PrismaQueryOptions } from "@/features/shared/types/prismaQuery.types";
+import type { Job } from "@shared/types";
 
 /**
  * CandidateJobsPage
@@ -23,6 +32,20 @@ export default function CandidateJobsPage() {
   const [pageSize, setPageSize] = useState<PageSize>(
     PAGE_SIZES.DEFAULT_PAGE_SIZE,
   );
+
+  // Base query for published jobs
+  const DEFAULT_PRISMA_QUERY: PrismaQueryOptions<Job> = useMemo(
+    () => ({
+      where: { status: "PUBLISHED" },
+      orderBy: { createdAt: "desc" },
+    }),
+    [],
+  );
+
+  // Filter hook (manages search, URL sync, prismaQuery)
+  const { searchTerm, prismaQuery, handleSearch } = useJobFilters({
+    baseQuery: DEFAULT_PRISMA_QUERY,
+  });
 
   const {
     jobs,
@@ -36,7 +59,11 @@ export default function CandidateJobsPage() {
     prevPage,
     handlePageClick,
     totalItems,
-  } = useJobsWithApplicationStatus({ pageSize });
+    isFetching,
+  } = useJobsWithApplicationStatus({
+    pageSize,
+    defaultPrismaQuery: prismaQuery,
+  });
 
   const navigate = useNavigate();
 
@@ -57,6 +84,25 @@ export default function CandidateJobsPage() {
         title="Jobs Marketplace"
         subtitle="Cerca e candidati per le opportunità di lavoro"
       />
+
+      {/* Toolbar con filtri */}
+      <Toolbar
+        variant="plain"
+        leftContent={
+          <>
+            <div className="flex-1">
+              <SearchInput
+                placeholder="Cerca per titolo, descrizione o località..."
+                value={searchTerm}
+                onSearch={handleSearch}
+                debounceMs={500}
+              />
+            </div>
+            <RefreshButton refetch={refetch} isLoading={isFetching} />
+          </>
+        }
+      />
+
       <PaginationWrapperStyled<JobWithApplicationStatus>
         data={jobs}
         isLoading={isLoading}
@@ -77,8 +123,8 @@ export default function CandidateJobsPage() {
           totalItems !== undefined
             ? {
                 totalItems,
-                singularText: "job",
-                pluralText: "jobs",
+                singularText: "Offerta",
+                pluralText: "Offerte",
               }
             : undefined
         }
