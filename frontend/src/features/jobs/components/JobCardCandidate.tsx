@@ -18,6 +18,7 @@ import {
   JOB_STATUS_LABELS,
   getJobStatusBadgeClasses,
 } from "@/features/jobs/utils/job-status.utils";
+import { formatSalaryRange } from "@/features/jobs/utils/salary-format.utils";
 
 interface JobCardCandidateProps {
   job: JobWithApplicationStatus;
@@ -99,11 +100,19 @@ export function JobCardCandidate({ job, onView }: JobCardCandidateProps) {
         )}
 
         {/* Salary Range */}
-        {job.salaryRange && (
+        {formatSalaryRange(
+          job.salaryMin,
+          job.salaryMax,
+          job.salaryCurrency,
+        ) && (
           <div className="flex items-center gap-2">
             <Banknote className="h-4 w-4 text-green-600 dark:text-green-400" />
             <span className="font-semibold text-green-700 dark:text-green-400">
-              {job.salaryRange}
+              {formatSalaryRange(
+                job.salaryMin,
+                job.salaryMax,
+                job.salaryCurrency,
+              )}
             </span>
           </div>
         )}
