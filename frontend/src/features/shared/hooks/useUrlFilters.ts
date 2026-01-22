@@ -51,7 +51,7 @@ export interface FilterParamConfig<TFilters extends Record<string, unknown>> {
  */
 export function useUrlFilters<TFilters extends Record<string, unknown>>(
   configs: FilterParamConfig<TFilters>[],
-  defaults: TFilters
+  defaults: TFilters,
 ) {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -78,25 +78,27 @@ export function useUrlFilters<TFilters extends Record<string, unknown>>(
           const sp = new URLSearchParams(prev);
 
           for (const cfg of configs) {
-            // Prendi il nuovo valore o mantieni quello corrente
-            const value = (next[cfg.key] ?? filtersFromUrl[cfg.key]) as
-              | TFilters[keyof TFilters]
-              | undefined;
+            // Se il nuovo valore è fornito in 'next', usalo.
+            if (Object.prototype.hasOwnProperty.call(next, cfg.key)) {
+              const newValue = next[cfg.key];
+              const serialized = cfg.serialize(newValue);
 
-            const serialized = cfg.serialize(value);
-            if (serialized === null || serialized === "") {
-              sp.delete(cfg.param);
-            } else {
-              sp.set(cfg.param, serialized);
+              if (serialized === null || serialized === "") {
+                sp.delete(cfg.param);
+              } else {
+                sp.set(cfg.param, serialized);
+              }
             }
+            // Altrimenti lascia il valore corrente nell'URL inalterato!
+            // (Non serve ri-parsare o fare merge manuale, perché stiamo modificando 'prev' che ha già i valori vecchi)
           }
 
           return sp;
         },
-        { replace: true }
+        { replace: true },
       );
     },
-    [configs, filtersFromUrl, setSearchParams]
+    [configs, setSearchParams],
   );
 
   return { filtersFromUrl, setFiltersInUrl };
