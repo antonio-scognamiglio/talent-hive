@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /**
  * useJobFilters Hook
  *
@@ -23,6 +24,8 @@ import { applyJobFilters } from "../mappers/applyJobFilters";
  */
 export type JobUrlFilters = {
   searchTerm?: string;
+  salaryMin?: number;
+  salaryMax?: number;
 };
 
 /**
@@ -40,8 +43,20 @@ export const JOB_FILTER_PARAM_CONFIGS: FilterParamConfig<JobUrlFilters>[] = [
   {
     param: "q",
     key: "searchTerm",
-    parse: (v) => (v && v.trim() !== "" ? v : undefined),
-    serialize: (v) => (v && v.trim() !== "" ? v : null),
+    parse: (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
+    serialize: (v) => (typeof v === "string" && v.trim() !== "" ? v : null),
+  },
+  {
+    param: "salaryMin",
+    key: "salaryMin",
+    parse: (v) => (v ? parseInt(v, 10) : undefined),
+    serialize: (v) => (v !== undefined ? String(v) : null),
+  },
+  {
+    param: "salaryMax",
+    key: "salaryMax",
+    parse: (v) => (v ? parseInt(v, 10) : undefined),
+    serialize: (v) => (v !== undefined ? String(v) : null),
   },
 ];
 
@@ -68,16 +83,27 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
     },
   );
 
-  // Stati controllati derivati dall'URL (per i componenti UI)
+  // Stati contr controllati derivati dall'URL (per i componenti UI)
   const [searchTerm, setSearchTerm] = useState<string>(
     filtersFromUrl.searchTerm ?? "",
+  );
+  const [salaryMin, setSalaryMin] = useState<number | undefined>(
+    filtersFromUrl.salaryMin,
+  );
+  const [salaryMax, setSalaryMax] = useState<number | undefined>(
+    filtersFromUrl.salaryMax,
   );
 
   // Sincronizza stati locali quando cambiano i filtri dall'URL (es. back/forward, link esterno)
   useEffect(() => {
     if (filtersFromUrl.searchTerm !== undefined) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchTerm(filtersFromUrl.searchTerm);
+    }
+    if (filtersFromUrl.salaryMin !== undefined) {
+      setSalaryMin(filtersFromUrl.salaryMin);
+    }
+    if (filtersFromUrl.salaryMax !== undefined) {
+      setSalaryMax(filtersFromUrl.salaryMax);
     }
   }, [filtersFromUrl]);
 
@@ -85,9 +111,11 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
   const prismaQuery = useMemo(() => {
     const filters = {
       searchTerm: searchTerm || undefined,
+      salaryMin: salaryMin,
+      salaryMax: salaryMax,
     };
     return applyJobFilters(baseQuery, filters);
-  }, [baseQuery, searchTerm]);
+  }, [baseQuery, searchTerm, salaryMin, salaryMax]);
 
   // Handler per la ricerca
   const handleSearch = useCallback(
@@ -98,12 +126,34 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
     [setFiltersInUrl],
   );
 
+  // Handler per salary min change
+  const handleSalaryMinChange = useCallback(
+    (value: number | undefined) => {
+      setSalaryMin(value);
+      setFiltersInUrl({ salaryMin: value });
+    },
+    [setFiltersInUrl],
+  );
+
+  // Handler per salary max change
+  const handleSalaryMaxChange = useCallback(
+    (value: number | undefined) => {
+      setSalaryMax(value);
+      setFiltersInUrl({ salaryMax: value });
+    },
+    [setFiltersInUrl],
+  );
+
   return {
     // Valori dei filtri
     searchTerm,
+    salaryMin,
+    salaryMax,
     // Query Prisma con filtri applicati
     prismaQuery,
     // Handler per cambiare i filtri
     handleSearch,
+    handleSalaryMinChange,
+    handleSalaryMaxChange,
   };
 }
