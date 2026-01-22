@@ -8,7 +8,9 @@ export interface CreateJobDto {
   title: string;
   description: string;
   location?: string;
-  salaryRange?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  salaryCurrency?: string;
 }
 
 /**

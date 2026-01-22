@@ -90,7 +90,9 @@ async function main() {
         "We are looking for an experienced React developer with 5+ years of experience. Must have strong knowledge of React 18+, TypeScript, and modern frontend tooling (Vite, Webpack). Experience with state management (Redux, Zustand) and testing frameworks is required.",
       status: "PUBLISHED",
       location: "Milan - HQ",
-      salaryRange: "€50k-€70k",
+      salaryMin: 50000,
+      salaryMax: 70000,
+      salaryCurrency: "EUR",
       createdById: sara.id,
     },
   });
@@ -103,7 +105,9 @@ async function main() {
         "Join our backend team! We need a skilled Node.js developer with experience in Express, PostgreSQL, and RESTful API design. Knowledge of Docker and CI/CD pipelines is a plus.",
       status: "PUBLISHED",
       location: "Remote",
-      salaryRange: "€45k-€65k",
+      salaryMin: 45000,
+      salaryMax: 65000,
+      salaryCurrency: "EUR",
       createdById: marco.id,
     },
   });
@@ -116,7 +120,9 @@ async function main() {
         "Hybrid role covering both frontend (React) and backend (Node.js). Perfect for T-shaped developers who love working across the stack. We offer flexible working hours and remote options.",
       status: "PUBLISHED",
       location: "New York Office",
-      salaryRange: "$80k-$110k",
+      salaryMin: 80000,
+      salaryMax: 110000,
+      salaryCurrency: "USD",
       createdById: sara.id,
     },
   });
@@ -129,7 +135,9 @@ async function main() {
         "Looking for a DevOps engineer to manage our cloud infrastructure on AWS. Experience with Kubernetes, Terraform, and CI/CD automation required.",
       status: "DRAFT",
       location: "Remote",
-      salaryRange: "€55k-€75k",
+      salaryMin: 55000,
+      salaryMax: 75000,
+      salaryCurrency: "EUR",
       createdById: marco.id,
     },
   });
@@ -142,7 +150,9 @@ async function main() {
         "Creative designer needed to craft beautiful, user-friendly interfaces. Strong portfolio required. Experience with Figma and design systems is essential.",
       status: "ARCHIVED",
       location: "Milan - HQ",
-      salaryRange: "€40k-€55k",
+      salaryMin: 40000,
+      salaryMax: 55000,
+      salaryCurrency: "EUR",
       createdById: sara.id,
     },
   });
@@ -267,17 +277,17 @@ async function main() {
   console.log(
     `   - In Progress: ${await prisma.application.count({
       where: { workflowStatus: { not: "DONE" } },
-    })}`
+    })}`,
   );
   console.log(
     `   - Hired: ${await prisma.application.count({
       where: { finalDecision: "HIRED" },
-    })}`
+    })}`,
   );
   console.log(
     `   - Rejected: ${await prisma.application.count({
       where: { finalDecision: "REJECTED" },
-    })}`
+    })}`,
   );
 
   console.log("\n🔐 Login Credentials:");

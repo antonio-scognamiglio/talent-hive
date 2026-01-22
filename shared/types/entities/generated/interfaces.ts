@@ -27,7 +27,9 @@ export interface Job {
   description: string;
   status: JobStatus;
   location: string | null;
-  salaryRange: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  salaryCurrency: string | null;
   createdAt: Date;
   updatedAt: Date;
   createdById: string;
