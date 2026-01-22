@@ -64,7 +64,11 @@ model Job {
   description String    @db.Text
   status      JobStatus @default(DRAFT)
   location    String?
-  salaryRange String?
+  
+  // Salary fields - numeric for filtering and sorting
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String? @default("EUR")
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
