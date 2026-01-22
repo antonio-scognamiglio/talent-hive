@@ -8,7 +8,7 @@ import { queryClient } from "@/features/shared";
 import { AuthProvider } from "@/features/auth/context/AuthProvider";
 import { AppRoutes } from "@/features/routing/components/AppRoutes";
 import { GuestRoute } from "@/features/routing/components/GuestRoute";
-import Auth from "@/pages/auth/Auth";
+import AuthPage from "@/pages/auth/AuthPage";
 import { MinimalLayout } from "./features/routing/layouts/MinimalLayout";
 
 /**
@@ -36,7 +36,7 @@ function App() {
                   element={
                     <MinimalLayout>
                       <GuestRoute>
-                        <Auth />
+                        <AuthPage />
                       </GuestRoute>
                     </MinimalLayout>
                   }

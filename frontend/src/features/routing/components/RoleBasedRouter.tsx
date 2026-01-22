@@ -5,6 +5,7 @@ import { LoadingFallback } from "./LoadingFallback";
 import { getRoutesForRole } from "../utils/route-helpers";
 import NotFound from "@/pages/not-found/NotFound";
 import type { RouteGroup, RouteConfig } from "../types";
+import React from "react";
 
 /**
  * Props per il componente RoleBasedRouter
@@ -103,8 +104,6 @@ export function RoleBasedRouter<TRole extends string, TUser>({
     <Suspense fallback={loadingFallback || <LoadingFallback />}>
       <Routes>
         {userRoutes.map((route) => {
-          const Component = route.element;
-
           // Content base con ProtectedRoute
           const content = (
             <ProtectedRoute
@@ -119,7 +118,11 @@ export function RoleBasedRouter<TRole extends string, TUser>({
                 accessDeniedFallback ? () => accessDeniedFallback : undefined
               }
             >
-              <Component />
+              {/* If already a JSX element (like <Navigate />), render directly.
+                  Otherwise it's a component (lazy or normal), use createElement */}
+              {React.isValidElement(route.element)
+                ? route.element
+                : React.createElement(route.element as React.ComponentType)}
             </ProtectedRoute>
           );
 

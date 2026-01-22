@@ -14,7 +14,7 @@ export type LayoutType = "sidebar" | "navbar" | "minimal" | null;
  */
 export interface RouteConfig<TRole extends string = string> {
   path: string;
-  element: LazyExoticComponent<ComponentType>;
+  element: LazyExoticComponent<ComponentType> | ReactNode;
   layout?: LayoutType;
   requiredPermissions?: string[];
 

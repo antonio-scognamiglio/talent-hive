@@ -12,7 +12,7 @@ type TabValue = "login" | "register";
  * Uses lex-nexus pattern: full-screen flex layout with fixed header/footer,
  * forcing the auth card to take all remaining space regardless of content.
  */
-export default function Auth() {
+export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<TabValue>("login");
 
   return (
