@@ -1,7 +1,8 @@
 import { lazy } from "react";
-import { LayoutDashboard } from "lucide-react";
+import { Briefcase } from "lucide-react";
 import { USER_ROLES, type UserRole } from "@/features/shared/types/roles.types";
 import type { RouteGroup } from "@/features/routing/types";
+import { Navigate } from "react-router-dom";
 
 // ==========================================================================
 // LAZY LOADED COMPONENTS
@@ -15,50 +16,83 @@ const AdminJobsPage = lazy(() => import("@/pages/jobs/AdminJobsPage"));
 // PROTECTED ROUTES CONFIGURATION
 // ==========================================================================
 export const PROTECTED_ROUTE_GROUPS: RouteGroup<UserRole>[] = [
+  // ==========================================================================
+  // ROOT REDIRECTS - Role-based home page redirects
+  // ==========================================================================
   {
-    name: "Home",
+    name: "Root Redirects",
+    order: -1, // Execute before all other routes
+    allowedRoles: [
+      USER_ROLES.CANDIDATE,
+      USER_ROLES.RECRUITER,
+      USER_ROLES.ADMIN,
+    ],
+    routes: [
+      {
+        path: "/",
+        element: <Navigate to="/jobs" replace />,
+        allowedRoles: [
+          USER_ROLES.CANDIDATE,
+          USER_ROLES.RECRUITER,
+          USER_ROLES.ADMIN,
+        ],
+        layout: "sidebar",
+        meta: {
+          title: "Home Redirect",
+          showInSidebar: false,
+          description: "Redirects to default page based on user role",
+        },
+      },
+    ],
+  },
+
+  // ==========================================================================
+  // JOBS - Job listings and management
+  // ==========================================================================
+  {
+    name: "Jobs",
     allowedRoles: [
       USER_ROLES.RECRUITER,
       USER_ROLES.ADMIN,
       USER_ROLES.CANDIDATE,
     ],
-    icon: LayoutDashboard,
+    icon: Briefcase,
     order: 1,
     routes: [
       {
-        path: "/",
+        path: "/jobs",
         element: CandidateJobsPage,
         allowedRoles: [USER_ROLES.CANDIDATE],
         layout: "sidebar",
         meta: {
           title: "Jobs Marketplace",
-          icon: LayoutDashboard,
+          icon: Briefcase,
           showInSidebar: true,
           sidebarOrder: 1,
           description: "Cerca e candidati alle offerte di lavoro",
         },
       },
       {
-        path: "/",
+        path: "/jobs",
         element: RecruiterJobsPage,
         allowedRoles: [USER_ROLES.RECRUITER],
         layout: "sidebar",
         meta: {
           title: "Annunci Pubblicati",
-          icon: LayoutDashboard,
+          icon: Briefcase,
           showInSidebar: true,
           sidebarOrder: 1,
           description: "Gestisci i tuoi annunci di lavoro",
         },
       },
       {
-        path: "/",
+        path: "/jobs",
         element: AdminJobsPage,
         allowedRoles: [USER_ROLES.ADMIN],
         layout: "sidebar",
         meta: {
           title: "Gestione Annunci",
-          icon: LayoutDashboard,
+          icon: Briefcase,
           showInSidebar: true,
           sidebarOrder: 1,
           description: "Gestisci tutti gli annunci di lavoro",
