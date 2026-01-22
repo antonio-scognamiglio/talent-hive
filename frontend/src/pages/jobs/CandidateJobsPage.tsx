@@ -15,7 +15,10 @@ import {
   Toolbar,
   RefreshButton,
 } from "@/features/shared/components";
-import { SearchInput } from "@/features/shared/components/filters";
+import {
+  SearchInput,
+  NumberFilter,
+} from "@/features/shared/components/filters";
 import { PageContent, PageHeader } from "@/features/shared/components/layout";
 import { Briefcase } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -42,8 +45,16 @@ export default function CandidateJobsPage() {
     [],
   );
 
-  // Filter hook (manages search, URL sync, prismaQuery)
-  const { searchTerm, prismaQuery, handleSearch } = useJobFilters({
+  // Filter hook (manages search, salary, URL sync, prismaQuery)
+  const {
+    searchTerm,
+    salaryMin,
+    salaryMax,
+    prismaQuery,
+    handleSearch,
+    handleSalaryMinChange,
+    handleSalaryMaxChange,
+  } = useJobFilters({
     baseQuery: DEFAULT_PRISMA_QUERY,
   });
 
@@ -90,14 +101,30 @@ export default function CandidateJobsPage() {
         variant="plain"
         leftContent={
           <>
-            <div className="flex-1">
-              <SearchInput
-                placeholder="Cerca per titolo, descrizione o località..."
-                value={searchTerm}
-                onSearch={handleSearch}
-                debounceMs={500}
-              />
-            </div>
+            <SearchInput
+              placeholder="Cerca per titolo, descrizione o località..."
+              value={searchTerm}
+              onSearch={handleSearch}
+              debounceMs={500}
+              className="flex-1"
+            />
+            <NumberFilter
+              value={salaryMin}
+              onChange={handleSalaryMinChange}
+              placeholder="Salario minimo"
+              prefix="€"
+              step={1000}
+              className="flex-1"
+            />
+            <NumberFilter
+              value={salaryMax}
+              onChange={handleSalaryMaxChange}
+              placeholder="Salario massimo"
+              prefix="€"
+              step={1000}
+              className="flex-1"
+            />
+
             <RefreshButton refetch={refetch} isLoading={isFetching} />
           </>
         }
