@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
@@ -10,7 +10,6 @@ interface SearchInputProps {
   debounceMs?: number;
   className?: string;
   value?: string;
-  onChange?: (value: string) => void;
 }
 
 /**
@@ -18,6 +17,7 @@ interface SearchInputProps {
  *
  * Componente riutilizzabile per input di ricerca con debounce.
  * Gestisce automaticamente il debounce e fornisce un'icona di ricerca e un pulsante per cancellare.
+ * Pattern event-driven (senza useEffect passivi).
  *
  * @example
  * <SearchInput
@@ -32,63 +32,57 @@ export function SearchInput({
   debounceMs = 500,
   className,
   value: controlledValue,
-  onChange: controlledOnChange,
 }: SearchInputProps) {
   const [searchTerm, setSearchTerm] = useState(controlledValue || "");
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sincronizza con valore controllato se fornito
+  // 1. Helper per schedulare il debounce
+  const scheduleDebouncedUpdate = useCallback(
+    (val: string) => {
+      // Pulisci timer precedente
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      // Schedula nuovo timer
+      debounceTimerRef.current = setTimeout(() => {
+        onSearch(val);
+      }, debounceMs);
+    },
+    [onSearch, debounceMs],
+  );
+
+  // 2. Cleanup del timer all'unmount
   useEffect(() => {
-    if (controlledValue !== undefined) {
-      setSearchTerm(controlledValue);
-    }
-  }, [controlledValue]);
-
-  // Debounce effect
-  useEffect(() => {
-    // Pulisci il timer precedente
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // Imposta un nuovo timer
-    debounceTimerRef.current = setTimeout(() => {
-      onSearch(searchTerm);
-    }, debounceMs);
-
-    // Cleanup
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [searchTerm, onSearch, debounceMs]);
-
-  // Chiama onSearch immediatamente quando il componente viene montato con valore vuoto
-  // per assicurarsi che i filtri vengano resettati
-  useEffect(() => {
-    if (searchTerm === "") {
-      onSearch("");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setSearchTerm(newValue);
-    if (controlledOnChange) {
-      controlledOnChange(newValue);
-    }
-  };
+  // 3. HandleChange che chiama l'update schedulato
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
 
-  const handleClear = () => {
+      // Aggiorna UI subito
+      setSearchTerm(newValue);
+
+      // Triggera debounce per il parent
+      scheduleDebouncedUpdate(newValue);
+    },
+    [scheduleDebouncedUpdate],
+  );
+
+  // 4. HandleClear immediato
+  const handleClear = useCallback(() => {
     setSearchTerm("");
-    if (controlledOnChange) {
-      controlledOnChange("");
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
-    // Chiama immediatamente onSearch con stringa vuota per rimuovere i filtri
-    onSearch("");
-  };
+    onSearch(""); // Clear immediato!
+  }, [onSearch]);
 
   return (
     <div
@@ -104,16 +98,15 @@ export function SearchInput({
         onChange={handleChange}
         className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent h-full"
       />
-      {searchTerm && (
-        <Button
-          className="hover:bg-transparent border-none hover:text-muted-foreground p-0"
-          variant="outline"
-          size="sm"
-          onClick={handleClear}
-        >
-          <X className="h-2 w-2" />
-        </Button>
-      )}
+      <Button
+        className="hover:bg-transparent border-none hover:text-muted-foreground p-0"
+        variant="outline"
+        size="sm"
+        onClick={handleClear}
+        disabled={!searchTerm}
+      >
+        <X className="h-2 w-2" />
+      </Button>
     </div>
   );
 }
