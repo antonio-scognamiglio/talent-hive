@@ -42,7 +42,7 @@ export function DateRangeFilter({
               onStartDateChange(undefined);
             }
           }}
-          className="w-[150px]"
+          className="w-36"
         />
       </div>
       <div className="flex items-center gap-2">
@@ -60,7 +60,7 @@ export function DateRangeFilter({
               onEndDateChange(undefined);
             }
           }}
-          className="w-[150px]"
+          className="w-36"
         />
       </div>
     </div>
