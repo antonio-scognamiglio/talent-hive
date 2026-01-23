@@ -26,6 +26,7 @@ function cleanWhereFilter<T>(
   filterKey: keyof T,
   value: any,
   operator?: FieldOperator,
+  mode: "merge" | "replace" = "merge",
 ): PrismaQueryOptions<T> | undefined {
   const newQuery = { ...prismaQuery };
 
@@ -35,7 +36,7 @@ function cleanWhereFilter<T>(
     value === null ||
     value === ""
   ) {
-    // Rimuovi il filtro
+    // Rimuovi il filtro (comportamento uguale per merge/replace quando il valore è vuoto)
     if (newQuery.where) {
       const currentFieldValue = (newQuery.where as any)[filterKey];
 
@@ -43,10 +44,10 @@ function cleanWhereFilter<T>(
         operator &&
         operator !== "equals" &&
         typeof currentFieldValue === "object" &&
-        currentFieldValue !== null
+        currentFieldValue !== null &&
+        mode !== "replace" // In replace mode, rimuoviamo tutto comunque se value è vuoto? Sì, o reset totale.
       ) {
-        // Se è specificato un operatore diverso da 'equals' e il campo è un oggetto con operatori,
-        // rimuovi solo l'operatore specifico
+        // MERGE: Rimuovi solo l'operatore specifico
         const { [operator]: _, ...restOperators } = currentFieldValue;
 
         if (Object.keys(restOperators).length === 0) {
@@ -62,7 +63,7 @@ function cleanWhereFilter<T>(
           } as PrismaWhere<T>;
         }
       } else {
-        // Comportamento originale: rimuovi tutto il campo
+        // REPLACE o Default remove: rimuovi tutto il campo
         const { [filterKey]: _, ...restWhere } = newQuery.where as any;
         newQuery.where =
           Object.keys(restWhere).length > 0 ? restWhere : undefined;
@@ -73,18 +74,26 @@ function cleanWhereFilter<T>(
     let filterValue: any = value;
 
     if (operator && operator !== "equals") {
-      // Se è specificato un operatore diverso da 'equals', wrappa il valore
-      const currentFieldValue = (newQuery.where as any)?.[filterKey];
-
-      if (typeof currentFieldValue === "object" && currentFieldValue !== null) {
-        // Mantieni gli operatori esistenti e aggiungi/aggiorna quello nuovo
-        filterValue = {
-          ...currentFieldValue,
-          [operator]: value,
-        };
-      } else {
-        // Crea nuovo oggetto con l'operatore
+      if (mode === "replace") {
+        // REPLACE: Crea nuovo oggetto solo con questo operatore, ignorando quelli esistenti
         filterValue = { [operator]: value };
+      } else {
+        // MERGE (default): Mantieni operatori esistenti
+        const currentFieldValue = (newQuery.where as any)?.[filterKey];
+
+        if (
+          typeof currentFieldValue === "object" &&
+          currentFieldValue !== null
+        ) {
+          // Mantieni gli operatori esistenti e aggiungi/aggiorna quello nuovo
+          filterValue = {
+            ...currentFieldValue,
+            [operator]: value,
+          };
+        } else {
+          // Crea nuovo oggetto con l'operatore
+          filterValue = { [operator]: value };
+        }
       }
     }
 
@@ -104,6 +113,7 @@ function cleanOrderByFilter<T>(
   prismaQuery: PrismaQueryOptions<T> | undefined,
   filterKey: keyof T,
   value: any,
+  mode: "merge" | "replace" = "merge",
 ): PrismaQueryOptions<T> | undefined {
   const newQuery = { ...prismaQuery };
 
@@ -135,26 +145,32 @@ function cleanOrderByFilter<T>(
     }
   } else {
     // Aggiungi/aggiorna il filtro
-    if (Array.isArray(newQuery.orderBy)) {
-      // Gestione ordinamento multiplo
-      const existingIndex = newQuery.orderBy.findIndex(
-        (orderItem) => (orderItem as any)[filterKey] !== undefined,
-      );
-
-      if (existingIndex >= 0) {
-        // Aggiorna l'elemento esistente
-        newQuery.orderBy[existingIndex] = {
-          ...newQuery.orderBy[existingIndex],
-          [filterKey]: value,
-        };
-      } else {
-        // Aggiungi un nuovo elemento
-        newQuery.orderBy.push({ [filterKey]: value } as any);
-      }
+    if (mode === "replace") {
+      // REPLACE: Sostituisci completamente l'ordinamento
+      newQuery.orderBy = [{ [filterKey]: value } as any];
     } else {
-      // Se non è un array, converti in array con l'ordinamento esistente e il nuovo
-      const existingOrderBy = newQuery.orderBy ? [newQuery.orderBy] : [];
-      newQuery.orderBy = [...existingOrderBy, { [filterKey]: value } as any];
+      // MERGE (default): Aggiungi o aggiorna
+      if (Array.isArray(newQuery.orderBy)) {
+        // Gestione ordinamento multiplo
+        const existingIndex = newQuery.orderBy.findIndex(
+          (orderItem) => (orderItem as any)[filterKey] !== undefined,
+        );
+
+        if (existingIndex >= 0) {
+          // Aggiorna l'elemento esistente
+          newQuery.orderBy[existingIndex] = {
+            ...newQuery.orderBy[existingIndex],
+            [filterKey]: value,
+          };
+        } else {
+          // Aggiungi un nuovo elemento
+          newQuery.orderBy.push({ [filterKey]: value } as any);
+        }
+      } else {
+        // Se non è un array, converti in array con l'ordinamento esistente e il nuovo
+        const existingOrderBy = newQuery.orderBy ? [newQuery.orderBy] : [];
+        newQuery.orderBy = [...existingOrderBy, { [filterKey]: value } as any];
+      }
     }
   }
 
@@ -178,11 +194,12 @@ export function cleanPrismaQuery<T>(
   value: any,
   section: "where" | "orderBy" = "where",
   operator?: FieldOperator,
+  mode: "merge" | "replace" = "merge",
 ): PrismaQueryOptions<T> | undefined {
   if (section === "where") {
-    return cleanWhereFilter(prismaQuery, filterKey, value, operator);
+    return cleanWhereFilter(prismaQuery, filterKey, value, operator, mode);
   } else if (section === "orderBy") {
-    return cleanOrderByFilter(prismaQuery, filterKey, value);
+    return cleanOrderByFilter(prismaQuery, filterKey, value, mode);
   }
 
   return prismaQuery;
