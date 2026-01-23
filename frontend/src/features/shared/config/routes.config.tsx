@@ -9,6 +9,9 @@ import { Navigate } from "react-router-dom";
 // ==========================================================================
 // Jobs pages (role-specific)
 const CandidateJobsPage = lazy(() => import("@/pages/jobs/CandidateJobsPage"));
+const CandidateJobDetailPage = lazy(
+  () => import("@/pages/jobs/CandidateJobDetailPage"),
+);
 const RecruiterJobsPage = lazy(() => import("@/pages/jobs/RecruiterJobsPage"));
 const AdminJobsPage = lazy(() => import("@/pages/jobs/AdminJobsPage"));
 
@@ -39,7 +42,7 @@ export const PROTECTED_ROUTE_GROUPS: RouteGroup<UserRole>[] = [
         layout: "sidebar",
         meta: {
           title: "Home Redirect",
-          showInSidebar: false,
+          hidden: true,
           description: "Redirects to default page based on user role",
         },
       },
@@ -70,6 +73,16 @@ export const PROTECTED_ROUTE_GROUPS: RouteGroup<UserRole>[] = [
           showInSidebar: true,
           sidebarOrder: 1,
           description: "Cerca e candidati alle offerte di lavoro",
+        },
+      },
+      {
+        path: "/jobs/:id",
+        element: CandidateJobDetailPage,
+        allowedRoles: [USER_ROLES.CANDIDATE],
+        layout: "sidebar",
+        meta: {
+          title: "Dettaglio Annuncio",
+          hidden: true,
         },
       },
       {
