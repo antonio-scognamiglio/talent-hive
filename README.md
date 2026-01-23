@@ -410,7 +410,7 @@ bunx prisma generate
 
 - **Backend**: Uses `@prisma/client` directly for full Prisma capabilities
 - **Frontend**: Uses pure TS interfaces from `@shared/types` (no Prisma runtime)
-- **DTOs**: Follow Powergiob pattern - simple with `[key: string]: any` for Prisma queries
+- **DTOs**: Follow Simple DTO pattern - simple with `[key: string]: any` for Prisma queries
 - **Separation**: Backend/Frontend pagination types differ in `query` field typing
 
 ---
@@ -459,17 +459,17 @@ bunx prisma generate
 - [x] Type system integration
 - [x] Service layer (`jobs.service.ts`)
 - [x] `usePaginationForGen` hook
-- [ ] `useJobs` hook (in progress)
-- [ ] Jobs listing page (CANDIDATE view)
-- [ ] Job detail page
+- [x] `useJobs` hook
+- [x] Jobs listing page (CANDIDATE view)
+- [x] Job detail page (CANDIDATE view)
 - [ ] Application flow
 - [ ] Kanban board component (RECRUITER)
-- [ ] Admin dashboard
+- [ ] User Management (Admin - TBD)
 
-**Future**
+**Future / Ideas**
 
-- [ ] Email notifications
-- [ ] Advanced search with filters
+- [ ] Email notifications (Maybe)
+- [x] Advanced search with filters (In Progress)
 - [ ] Analytics dashboard
 - [ ] Export to CSV/PDF
 - [ ] Multi-language support
