@@ -13,3 +13,4 @@ export * from "./SecondaryButton";
 export * from "./search-selects";
 export * from "./filters";
 export * from "./Toolbar";
+export * from "./BackButton";
