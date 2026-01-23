@@ -3,7 +3,10 @@ import {
   useJobsWithApplicationStatus,
   type JobWithApplicationStatus,
 } from "@/features/jobs/hooks/useJobsWithApplicationStatus";
-import { useJobFilters } from "@/features/jobs/hooks/useJobFilters";
+import {
+  useJobFilters,
+  JOB_ORDER_BY_OPTIONS,
+} from "@/features/jobs/hooks/useJobFilters";
 import { PaginationWrapperStyled } from "@/features/pagination/components";
 import {
   PAGE_SIZES,
@@ -18,6 +21,7 @@ import {
 import {
   SearchInput,
   NumberFilter,
+  OrderByFilter,
 } from "@/features/shared/components/filters";
 import { PageContent, PageHeader } from "@/features/shared/components/layout";
 import { Briefcase } from "lucide-react";
@@ -50,10 +54,12 @@ export default function CandidateJobsPage() {
     searchTerm,
     salaryMin,
     salaryMax,
+    orderBy,
     prismaQuery,
     handleSearch,
     handleSalaryMinChange,
     handleSalaryMaxChange,
+    handleOrderByChange,
   } = useJobFilters({
     baseQuery: DEFAULT_PRISMA_QUERY,
   });
@@ -106,7 +112,7 @@ export default function CandidateJobsPage() {
               value={searchTerm}
               onSearch={handleSearch}
               debounceMs={500}
-              className="flex-1"
+              className="flex-2 min-w-72 sm:min-w-96"
             />
             <NumberFilter
               value={salaryMin}
@@ -114,7 +120,7 @@ export default function CandidateJobsPage() {
               placeholder="Salario minimo"
               prefix="€"
               step={1000}
-              className="flex-1"
+              className="flex-1 min-w-48 sm:min-w-60"
             />
             <NumberFilter
               value={salaryMax}
@@ -122,9 +128,15 @@ export default function CandidateJobsPage() {
               placeholder="Salario massimo"
               prefix="€"
               step={1000}
-              className="flex-1"
+              className="flex-1 min-w-48 sm:min-w-60"
             />
-
+            <OrderByFilter
+              value={orderBy || "none"}
+              onChange={handleOrderByChange}
+              options={JOB_ORDER_BY_OPTIONS}
+              placeholder="Ordina per..."
+              className="flex-1 min-w-48 sm:min-w-60"
+            />
             <RefreshButton refetch={refetch} isLoading={isFetching} />
           </>
         }
