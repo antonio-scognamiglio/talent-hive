@@ -3,6 +3,7 @@
  */
 
 import { formatDistanceToNow, format } from "date-fns";
+import { it } from "date-fns/locale";
 
 /**
  * Normalizes a date input to a Date object
@@ -42,7 +43,7 @@ export function getRelativeTimeString(date: string | Date): string {
   const normalized = normalizeDate(date);
   if (!normalized) return "";
 
-  return formatDistanceToNow(normalized, { addSuffix: true });
+  return formatDistanceToNow(normalized, { addSuffix: true, locale: it });
 }
 
 /**
@@ -58,7 +59,7 @@ export function formatDate(
   const normalized = normalizeDate(date);
   if (!normalized) return "";
 
-  return format(normalized, formatStr);
+  return format(normalized, formatStr, { locale: it });
 }
 
 /**
