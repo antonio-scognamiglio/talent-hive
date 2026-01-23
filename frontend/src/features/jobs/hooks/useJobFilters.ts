@@ -18,6 +18,7 @@ import {
   type FilterParamConfig,
 } from "@/features/shared/hooks/useUrlFilters";
 import { applyJobFilters } from "../mappers/applyJobFilters";
+import type { OrderByOption } from "@/features/shared/components/filters";
 
 /**
  * Tipo per i filtri sincronizzati con URL
@@ -26,6 +27,7 @@ export type JobUrlFilters = {
   searchTerm?: string;
   salaryMin?: number;
   salaryMax?: number;
+  orderBy?: string;
 };
 
 /**
@@ -35,6 +37,17 @@ interface UseJobFiltersProps {
   /** Query base Prisma (include, orderBy, ecc.) */
   baseQuery: PrismaQueryOptions<Job>;
 }
+
+/**
+ * Opzioni di ordinamento per i jobs
+ */
+export const JOB_ORDER_BY_OPTIONS: OrderByOption[] = [
+  { label: "Nessun ordinamento", value: "none" },
+  { label: "Più recenti", value: "createdAt-desc" },
+  { label: "Meno recenti", value: "createdAt-asc" },
+  { label: "Salario min: Alto → Basso", value: "salaryMin-desc" },
+  { label: "Salario min: Basso → Alto", value: "salaryMin-asc" },
+];
 
 /**
  * Configurazione dei query params per i filtri dei jobs
@@ -57,6 +70,12 @@ export const JOB_FILTER_PARAM_CONFIGS: FilterParamConfig<JobUrlFilters>[] = [
     key: "salaryMax",
     parse: (v) => (v ? parseInt(v, 10) : undefined),
     serialize: (v) => (v !== undefined ? String(v) : null),
+  },
+  {
+    param: "orderBy",
+    key: "orderBy",
+    parse: (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
+    serialize: (v) => (typeof v === "string" && v.trim() !== "" ? v : null),
   },
 ];
 
@@ -93,6 +112,9 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
   const [salaryMax, setSalaryMax] = useState<number | undefined>(
     filtersFromUrl.salaryMax,
   );
+  const [orderBy, setOrderBy] = useState<string | undefined>(
+    filtersFromUrl.orderBy,
+  );
 
   // Sincronizza stati locali quando cambiano i filtri dall'URL (es. back/forward, link esterno)
   useEffect(() => {
@@ -105,6 +127,9 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
     if (filtersFromUrl.salaryMax !== undefined) {
       setSalaryMax(filtersFromUrl.salaryMax);
     }
+    if (filtersFromUrl.orderBy !== undefined) {
+      setOrderBy(filtersFromUrl.orderBy);
+    }
   }, [filtersFromUrl]);
 
   // Costruisce la prismaQuery con i filtri applicati
@@ -113,9 +138,10 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
       searchTerm: searchTerm || undefined,
       salaryMin: salaryMin,
       salaryMax: salaryMax,
+      orderBy: orderBy,
     };
     return applyJobFilters(baseQuery, filters);
-  }, [baseQuery, searchTerm, salaryMin, salaryMax]);
+  }, [baseQuery, searchTerm, salaryMin, salaryMax, orderBy]);
 
   // Handler per la ricerca
   const handleSearch = useCallback(
@@ -144,16 +170,27 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
     [setFiltersInUrl],
   );
 
+  // Handler per orderBy change
+  const handleOrderByChange = useCallback(
+    (value: string) => {
+      setOrderBy(value || undefined);
+      setFiltersInUrl({ orderBy: value || undefined });
+    },
+    [setFiltersInUrl],
+  );
+
   return {
     // Valori dei filtri
     searchTerm,
     salaryMin,
     salaryMax,
+    orderBy,
     // Query Prisma con filtri applicati
     prismaQuery,
     // Handler per cambiare i filtri
     handleSearch,
     handleSalaryMinChange,
     handleSalaryMaxChange,
+    handleOrderByChange,
   };
 }

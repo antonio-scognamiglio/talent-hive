@@ -54,3 +54,40 @@ export function getJobSalaryMaxFilterCleanedQuery(
     baseQuery
   );
 }
+
+/**
+ * Applica l'ordinamento alla query
+ * NOTA: Usa 'replace' mode per garantire ordinamento esclusivo,
+ * più ID come tie-breaker stabile.
+ */
+export function getJobOrderByCleanedQuery(
+  query: PrismaQueryOptions<Job> | undefined,
+  orderByValue: string | undefined,
+): PrismaQueryOptions<Job> {
+  const baseQuery = query || {};
+
+  // Se vuoto o "none", resetta al default (o rimuovi)
+  if (!orderByValue || orderByValue === "" || orderByValue === "none") {
+    // Rimuoviamo l'orderBy esistente e mettiamo il default
+    const { orderBy: _existingOrderBy, ...queryWithoutOrderBy } = baseQuery;
+    return {
+      ...queryWithoutOrderBy,
+      orderBy: { createdAt: "desc" },
+    };
+  }
+
+  // Parse "field-direction" → es. "createdAt-desc"
+  const [field, direction] = orderByValue.split("-");
+
+  // 1. Applica il filtro principale in modalità REPLACE (sovrascrive tutto)
+  const result = cleanPrismaQuery(
+    baseQuery,
+    field as keyof Job,
+    direction || "desc",
+    "orderBy",
+    undefined,
+    "replace", // Sovrascrive precedenti ordinamenti
+  );
+
+  return result || baseQuery;
+}

@@ -62,7 +62,7 @@ export function Toolbar({
         className={cn(
           "flex flex-wrap items-center gap-2",
           rightContent ? "justify-between" : "",
-          className
+          className,
         )}
       >
         {/* Contenuto a sinistra */}
@@ -70,7 +70,7 @@ export function Toolbar({
           className={cn(
             "flex flex-wrap items-center gap-2",
             rightContent ? "" : "flex-1",
-            leftClassName
+            leftClassName,
           )}
         >
           {leftContent}
@@ -93,7 +93,7 @@ export function Toolbar({
     <div
       className={cn(
         "flex flex-wrap items-center justify-between gap-4 mb-4 p-4 bg-card border rounded-lg",
-        className
+        className,
       )}
     >
       {/* Contenuto a sinistra */}

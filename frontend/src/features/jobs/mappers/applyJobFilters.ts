@@ -5,6 +5,7 @@ import {
   getJobSearchFilterCleanedQuery,
   getJobSalaryMinFilterCleanedQuery,
   getJobSalaryMaxFilterCleanedQuery,
+  getJobOrderByCleanedQuery,
 } from "./job-query-builders";
 
 /**
@@ -14,6 +15,7 @@ export interface JobFilters {
   searchTerm?: string;
   salaryMin?: number;
   salaryMax?: number;
+  orderBy?: string;
 }
 
 /**
@@ -39,6 +41,11 @@ export function applyJobFilters(
   // Applica filtro salary max
   if (filters.salaryMax !== undefined) {
     result = getJobSalaryMaxFilterCleanedQuery(result, filters.salaryMax);
+  }
+
+  // Applica ordinamento se presente
+  if (filters.orderBy !== undefined) {
+    result = getJobOrderByCleanedQuery(result, filters.orderBy);
   }
 
   // Pulisci oggetti nested vuoti

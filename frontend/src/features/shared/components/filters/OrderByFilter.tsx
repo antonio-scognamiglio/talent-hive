@@ -35,7 +35,7 @@ export function OrderByFilter<T extends string = string>({
       onValueChange={(val) => onChange(val as T)}
       disabled={disabled}
     >
-      <SelectTrigger className={cn("w-36", className)}>
+      <SelectTrigger className={cn("w-full", className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
