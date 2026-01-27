@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useJobWithApplicationStatus } from "@/features/jobs/hooks/useJobWithApplicationStatus";
+import { useStateDialog } from "@/features/shared";
 import { PageContent } from "@/features/shared/components/layout/PageContent";
 import { DetailPageHeader } from "@/features/shared/components/layout/DetailPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import {
   Briefcase,
   CheckCircle2,
   AlertCircle,
+  FileText,
 } from "lucide-react";
 import {
   getRelativeTimeString,
@@ -27,18 +29,23 @@ import {
   getCandidateStatusColor,
 } from "@/features/applications/utils/status.utils";
 import { PrimaryButton } from "@/features/shared/components";
+import { ApplyJobDialog } from "@/features/applications/components/dialogs/ApplyJobDialog";
+import type { JobWithApplicationStatus } from "@/features/jobs/hooks/useJobsWithApplicationStatus";
 
 export default function CandidateJobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const dialog = useStateDialog<JobWithApplicationStatus>(["apply"]);
 
-  const { job, isLoading, isError } = useJobWithApplicationStatus({
-    jobId: id,
-  });
+  const { job, isLoading, isError, applyJobMutation, handleViewCv } =
+    useJobWithApplicationStatus({
+      jobId: id,
+    });
 
   const handleApply = () => {
-    // TODO: Implement Apply Dialog with CV upload
-    console.log("Open apply dialog for job:", job?.id);
+    if (job) {
+      dialog.openDialog(job, "apply");
+    }
   };
 
   if (isLoading) {
@@ -88,14 +95,24 @@ export default function CandidateJobDetailPage() {
         onBack={() => navigate("/jobs")}
         rightAction={
           isApplied ? (
-            <Badge
-              variant="outline"
-              className={`px-3 py-1.5 text-sm font-medium ${getCandidateStatusColor(
-                myApplication?.finalDecision,
-              )}`}
-            >
-              Status: {getCandidateDisplayStatus(myApplication?.finalDecision)}
-            </Badge>
+            <div className="flex flex-row gap-2 items-center">
+              <Badge
+                variant="outline"
+                className={`px-3 py-1.5 text-sm font-medium ${getCandidateStatusColor(
+                  myApplication?.finalDecision,
+                )}`}
+              >
+                {getCandidateDisplayStatus(myApplication?.finalDecision)}
+              </Badge>
+              <PrimaryButton
+                onClick={() =>
+                  myApplication?.id && handleViewCv(myApplication.id)
+                }
+                text="Visualizza CV"
+                showIcon
+                icon={<FileText className="h-4 w-4" />}
+              />
+            </div>
           ) : (
             <PrimaryButton onClick={handleApply} text="Invia Candidatura" />
           )
@@ -230,6 +247,17 @@ export default function CandidateJobDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Apply Dialog */}
+      {dialog.isDialogOpen("apply") && dialog.selectedItem && (
+        <ApplyJobDialog
+          isOpen={true}
+          onClose={dialog.closeDialog}
+          jobId={dialog.selectedItem.id}
+          jobTitle={dialog.selectedItem.title}
+          applyJobMutation={applyJobMutation}
+        />
+      )}
     </PageContent>
   );
 }
