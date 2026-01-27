@@ -159,6 +159,196 @@ async function main() {
   console.log("✅ Job created (ARCHIVED):", jobUX.title);
 
   // ============================================================================
+  // ADDITIONAL JOBS (NO CANDIDATES)
+  // ============================================================================
+
+  const jobMobile = await prisma.job.create({
+    data: {
+      title: "Senior Mobile Developer (React Native)",
+      description:
+        "Build cross-platform mobile applications using React Native. Experience with Expo, native modules, and app store deployment required. Knowledge of iOS and Android ecosystems is a plus.",
+      status: "PUBLISHED",
+      location: "Remote",
+      salaryMin: 55000,
+      salaryMax: 80000,
+      salaryCurrency: "EUR",
+      createdById: sara.id,
+    },
+  });
+  console.log("✅ Job created:", jobMobile.title);
+
+  const jobDataScientist = await prisma.job.create({
+    data: {
+      title: "Data Scientist",
+      description:
+        "Analyze large datasets and build predictive models. Strong Python skills required, experience with TensorFlow, PyTorch, and SQL. Must have excellent communication skills to present findings to stakeholders.",
+      status: "PUBLISHED",
+      location: "Berlin Office",
+      salaryMin: 60000,
+      salaryMax: 90000,
+      salaryCurrency: "EUR",
+      createdById: marco.id,
+    },
+  });
+  console.log("✅ Job created:", jobDataScientist.title);
+
+  const jobSecurityEngineer = await prisma.job.create({
+    data: {
+      title: "Security Engineer",
+      description:
+        "Protect our infrastructure and applications from security threats. Experience with penetration testing, OWASP, and security audits required. Certifications like CISSP or CEH are a plus.",
+      status: "PUBLISHED",
+      location: "London Office",
+      salaryMin: 70000,
+      salaryMax: 100000,
+      salaryCurrency: "GBP",
+      createdById: sara.id,
+    },
+  });
+  console.log("✅ Job created:", jobSecurityEngineer.title);
+
+  const jobProductManager = await prisma.job.create({
+    data: {
+      title: "Technical Product Manager",
+      description:
+        "Lead product development from ideation to launch. Work closely with engineering, design, and business teams. Experience with agile methodologies and technical background required.",
+      status: "PUBLISHED",
+      location: "Milan - HQ",
+      salaryMin: 55000,
+      salaryMax: 75000,
+      salaryCurrency: "EUR",
+      createdById: marco.id,
+    },
+  });
+  console.log("✅ Job created:", jobProductManager.title);
+
+  const jobQAEngineer = await prisma.job.create({
+    data: {
+      title: "QA Engineer",
+      description:
+        "Ensure quality of our software products through manual and automated testing. Experience with Cypress, Playwright, or Selenium required. Strong attention to detail essential.",
+      status: "PUBLISHED",
+      location: "Remote",
+      salaryMin: 40000,
+      salaryMax: 55000,
+      salaryCurrency: "EUR",
+      createdById: sara.id,
+    },
+  });
+  console.log("✅ Job created:", jobQAEngineer.title);
+
+  const jobMLEngineer = await prisma.job.create({
+    data: {
+      title: "Machine Learning Engineer",
+      description:
+        "Design and deploy ML models at scale. Experience with MLOps, Kubernetes, and cloud platforms (AWS/GCP). Strong Python and deep learning frameworks knowledge required.",
+      status: "PUBLISHED",
+      location: "Amsterdam Office",
+      salaryMin: 75000,
+      salaryMax: 110000,
+      salaryCurrency: "EUR",
+      createdById: marco.id,
+    },
+  });
+  console.log("✅ Job created:", jobMLEngineer.title);
+
+  const jobTechLead = await prisma.job.create({
+    data: {
+      title: "Tech Lead - Platform Team",
+      description:
+        "Lead a team of 5-8 engineers building our core platform. Hands-on coding expected (50%). Must have strong architectural skills and experience mentoring developers.",
+      status: "PUBLISHED",
+      location: "Milan - HQ",
+      salaryMin: 80000,
+      salaryMax: 120000,
+      salaryCurrency: "EUR",
+      createdById: sara.id,
+    },
+  });
+  console.log("✅ Job created:", jobTechLead.title);
+
+  const jobSRE = await prisma.job.create({
+    data: {
+      title: "Site Reliability Engineer",
+      description:
+        "Maintain high availability of our services. Experience with monitoring (Prometheus, Grafana), incident management, and automation. On-call rotation required.",
+      status: "DRAFT",
+      location: "Remote",
+      salaryMin: 60000,
+      salaryMax: 85000,
+      salaryCurrency: "EUR",
+      createdById: marco.id,
+    },
+  });
+  console.log("✅ Job created (DRAFT):", jobSRE.title);
+
+  const jobFrontendJunior = await prisma.job.create({
+    data: {
+      title: "Junior Frontend Developer",
+      description:
+        "Great opportunity for developers starting their career. Must have basic knowledge of HTML, CSS, JavaScript, and React. We provide mentorship and training.",
+      status: "PUBLISHED",
+      location: "Milan - HQ",
+      salaryMin: 28000,
+      salaryMax: 35000,
+      salaryCurrency: "EUR",
+      createdById: sara.id,
+    },
+  });
+  console.log("✅ Job created:", jobFrontendJunior.title);
+
+  const jobCloudArchitect = await prisma.job.create({
+    data: {
+      title: "Cloud Solutions Architect",
+      description:
+        "Design and implement cloud-native solutions on AWS. Must have AWS certifications (Solutions Architect Professional preferred). Experience with multi-region deployments required.",
+      status: "PUBLISHED",
+      location: "Frankfurt Office",
+      salaryMin: 90000,
+      salaryMax: 130000,
+      salaryCurrency: "EUR",
+      createdById: marco.id,
+    },
+  });
+  console.log("✅ Job created:", jobCloudArchitect.title);
+
+  // ============================================================================
+  // TEST CV UPLOAD (for seed applications)
+  // ============================================================================
+
+  console.log("📄 Loading and uploading test CV to MinIO...");
+
+  // Read test CV from file
+  const fs = await import("fs/promises");
+  const path = await import("path");
+
+  const cvFilePath = path.join(__dirname, "seed-data", "dummy-cv.pdf");
+
+  let testCvBuffer: Buffer;
+  try {
+    testCvBuffer = await fs.readFile(cvFilePath);
+    console.log(`✅ Test CV loaded from: ${cvFilePath}`);
+  } catch (error) {
+    console.error(`❌ Error reading CV file from ${cvFilePath}`);
+    console.error(
+      "Please add a dummy-cv.pdf file to backend/prisma/seed-data/",
+    );
+    throw error;
+  }
+
+  const testCvPath = "cvs/seed-test/dummy-cv.pdf";
+
+  // Upload to MinIO
+  const { storageService } = await import("../src/services/storage.service");
+  const cvUrl = await storageService.uploadFile(
+    testCvBuffer,
+    testCvPath,
+    "application/pdf",
+  );
+
+  console.log(`✅ Test CV uploaded to MinIO: ${cvUrl}`);
+
+  // ============================================================================
   // APPLICATIONS
   // ============================================================================
 
@@ -169,7 +359,7 @@ async function main() {
       userId: mario.id,
       workflowStatus: "INTERVIEW",
       finalDecision: null,
-      cvUrl: "cvs/mario-verdi/senior-react-dev.pdf",
+      cvUrl: cvUrl,
       coverLetter:
         "I'm a passionate React developer with 6 years of experience. I've built multiple large-scale applications using React, TypeScript, and modern tooling. My portfolio includes e-commerce platforms and SaaS products.",
       score: 4,
@@ -186,7 +376,7 @@ async function main() {
       userId: giulia.id,
       workflowStatus: "DONE",
       finalDecision: "HIRED",
-      cvUrl: "cvs/giulia-neri/senior-react-dev.pdf",
+      cvUrl: cvUrl,
       coverLetter:
         "Experienced frontend architect with a focus on performance and scalability. Led teams of 5+ developers in previous roles.",
       score: 5,
@@ -203,7 +393,7 @@ async function main() {
       userId: luca.id,
       workflowStatus: "DONE",
       finalDecision: "REJECTED",
-      cvUrl: "cvs/luca-russo/backend-engineer.pdf",
+      cvUrl: cvUrl,
       coverLetter:
         "I'm a Node.js developer with 2 years of experience. I've worked mainly with MongoDB and Express.",
       score: 2,
@@ -220,7 +410,7 @@ async function main() {
       userId: mario.id,
       workflowStatus: "NEW",
       finalDecision: null,
-      cvUrl: "cvs/mario-verdi/fullstack-developer.pdf",
+      cvUrl: cvUrl,
       coverLetter:
         "I have experience with both React and Node.js. I've built several fullstack applications from scratch.",
     },
@@ -234,7 +424,7 @@ async function main() {
       userId: luca.id,
       workflowStatus: "SCREENING",
       finalDecision: null,
-      cvUrl: "cvs/luca-russo/fullstack-developer.pdf",
+      cvUrl: cvUrl,
       coverLetter:
         "Looking for a hybrid role where I can learn both frontend and backend technologies.",
       notes: "CV under review. Some potential, needs more evaluation.",
@@ -249,7 +439,7 @@ async function main() {
       userId: giulia.id,
       workflowStatus: "OFFER",
       finalDecision: null,
-      cvUrl: "cvs/giulia-neri/backend-engineer.pdf",
+      cvUrl: cvUrl,
       coverLetter:
         "While I specialize in frontend, I have solid Node.js experience from fullstack projects.",
       score: 4,
@@ -270,9 +460,15 @@ async function main() {
   console.log(`   - Recruiters: 2`);
   console.log(`   - Candidates: 3`);
   console.log(`   Jobs: ${await prisma.job.count()}`);
-  console.log(`   - Published: 3`);
-  console.log(`   - Draft: 1`);
-  console.log(`   - Archived: 1`);
+  console.log(
+    `   - Published: ${await prisma.job.count({ where: { status: "PUBLISHED" } })}`,
+  );
+  console.log(
+    `   - Draft: ${await prisma.job.count({ where: { status: "DRAFT" } })}`,
+  );
+  console.log(
+    `   - Archived: ${await prisma.job.count({ where: { status: "ARCHIVED" } })}`,
+  );
   console.log(`   Applications: ${await prisma.application.count()}`);
   console.log(
     `   - In Progress: ${await prisma.application.count({

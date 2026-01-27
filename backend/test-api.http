@@ -179,3 +179,26 @@ Cookie: accessToken={{loginRecruiter.response.headers.Set-Cookie}}
 ### Archive job (as owner)
 DELETE {{baseUrl}}/api/jobs/<JOB_ID_HERE>
 Cookie: accessToken={{loginRecruiter.response.headers.Set-Cookie}}
+
+### ============================================================================
+### APPLICATIONS API - Get CV Download URL
+### ============================================================================
+
+### Get CV download URL as CANDIDATE (own application)
+# Usa l'ID di una tua application dal seed
+GET {{baseUrl}}/api/applications/<APPLICATION_ID_HERE>/cv
+Cookie: accessToken={{loginCandidate.response.headers.Set-Cookie}}
+
+### Get CV download URL as RECRUITER (for own job's application)
+# Usa l'ID di un'application per un job creato da Sara
+GET {{baseUrl}}/api/applications/<APPLICATION_ID_HERE>/cv
+Cookie: accessToken={{loginRecruiter.response.headers.Set-Cookie}}
+
+### Get CV download URL as ADMIN (should work for any application)
+GET {{baseUrl}}/api/applications/<APPLICATION_ID_HERE>/cv
+Cookie: accessToken={{loginAdmin.response.headers.Set-Cookie}}
+
+### Try to get CV of another candidate's application (should fail 404)
+GET {{baseUrl}}/api/applications/<OTHER_CANDIDATES_APPLICATION_ID>/cv
+Cookie: accessToken={{loginCandidate.response.headers.Set-Cookie}}
+
