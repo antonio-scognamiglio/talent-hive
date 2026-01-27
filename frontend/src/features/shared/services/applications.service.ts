@@ -41,7 +41,7 @@ export const applicationsService = {
   createApplication: async (
     jobId: string,
     coverLetter: string | undefined,
-    cvFile: File
+    cvFile: File,
   ): Promise<Application> => {
     const formData = new FormData();
     formData.append("jobId", jobId);
@@ -57,8 +57,22 @@ export const applicationsService = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
+  },
+
+  /**
+   * Get presigned URL to download/preview CV
+   * GET /api/applications/:id/cv
+   *
+   * @param applicationId - Application ID
+   * @returns Presigned URL for CV access
+   */
+  getCvUrl: async (applicationId: string): Promise<string> => {
+    const response = await apiClient.get<{ downloadUrl: string }>(
+      `/applications/${applicationId}/cv`,
+    );
+    return response.data.downloadUrl;
   },
 };

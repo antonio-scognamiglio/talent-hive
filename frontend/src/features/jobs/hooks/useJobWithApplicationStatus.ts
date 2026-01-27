@@ -46,6 +46,8 @@ export const useJobWithApplicationStatus = ({
     data: myApplications,
     isLoading: isAppsLoading,
     isError: isAppsError,
+    applyJobMutation, // <-- Destructure mutation from useMyApplications
+    handleViewCv, // <-- Destructure handleViewCv
   } = useMyApplications();
 
   // 3. Enrich the job with application status
@@ -66,5 +68,7 @@ export const useJobWithApplicationStatus = ({
     isLoading: isJobLoading || isAppsLoading,
     isError: isJobError || isAppsError,
     error: jobError,
+    applyJobMutation, // <-- Pass-through mutation for convenience
+    handleViewCv, // <-- Pass-through handleViewCv
   };
 };
