@@ -331,6 +331,36 @@ class ApplicationService {
       },
     });
   }
+
+  /**
+   * Get presigned URL to download CV
+   * RBAC: CANDIDATE sees only their own CV, RECRUITER sees for their jobs, ADMIN sees all
+   */
+  async getCvDownloadUrl(
+    id: string,
+    user: UserWithoutPassword,
+  ): Promise<string> {
+    const application = await prisma.application.findUnique({
+      where: { id },
+      include: { job: true },
+    });
+
+    if (!application) {
+      throw new Error("Application not found");
+    }
+
+    // RBAC check
+    if (user.role === "CANDIDATE" && application.userId !== user.id) {
+      throw new Error("Application not found");
+    }
+
+    if (user.role === "RECRUITER" && application.job.createdById !== user.id) {
+      throw new Error("You can only view CVs for applications to your jobs");
+    }
+
+    // Generate presigned URL (valid for 24h)
+    return storageService.getPresignedUrl(application.cvUrl);
+  }
 }
 
 export const applicationService = new ApplicationService();

@@ -53,7 +53,7 @@ router.get("/my", authMiddleware, async (req, res) => {
     }
 
     const applications = await applicationService.getMyCandidateApplications(
-      req.user!.id
+      req.user!.id,
     );
     res.json(applications);
   } catch (error) {
@@ -70,7 +70,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const application = await applicationService.getApplicationById(
       req.params.id,
-      req.user!
+      req.user!,
     );
     res.json(application);
   } catch (error) {
@@ -79,8 +79,32 @@ router.get("/:id", authMiddleware, async (req, res) => {
       message === "Application not found"
         ? 404
         : message.includes("only view")
-        ? 403
-        : 500;
+          ? 403
+          : 500;
+    res.status(status).json({ error: message });
+  }
+});
+
+/**
+ * GET /api/applications/:id/cv
+ * Get presigned URL to download CV
+ * Auth: Required
+ */
+router.get("/:id/cv", authMiddleware, async (req, res) => {
+  try {
+    const downloadUrl = await applicationService.getCvDownloadUrl(
+      req.params.id,
+      req.user!,
+    );
+    res.json({ downloadUrl });
+  } catch (error) {
+    const message = (error as Error).message;
+    const status =
+      message === "Application not found"
+        ? 404
+        : message.includes("only view")
+          ? 403
+          : 500;
     res.status(status).json({ error: message });
   }
 });
@@ -113,7 +137,7 @@ router.post("/", authMiddleware, upload.single("cv"), async (req, res) => {
       { jobId, coverLetter },
       req.file.buffer,
       req.file.originalname,
-      req.user!.id
+      req.user!.id,
     );
 
     res.status(201).json(application);
@@ -122,10 +146,10 @@ router.post("/", authMiddleware, upload.single("cv"), async (req, res) => {
     const status = message.includes("already applied")
       ? 409
       : message === "Job not found"
-      ? 404
-      : message.includes("not accepting")
-      ? 400
-      : 500;
+        ? 404
+        : message.includes("not accepting")
+          ? 400
+          : 500;
     res.status(status).json({ error: message });
   }
 });
@@ -147,7 +171,7 @@ router.patch("/:id/workflow", authMiddleware, async (req, res) => {
     const application = await applicationService.updateWorkflowStatus(
       req.params.id,
       workflowStatus,
-      req.user!
+      req.user!,
     );
 
     res.json(application);
@@ -157,10 +181,10 @@ router.patch("/:id/workflow", authMiddleware, async (req, res) => {
       message === "Application not found"
         ? 404
         : message.includes("only update")
-        ? 403
-        : message.includes("Cannot change")
-        ? 400
-        : 500;
+          ? 403
+          : message.includes("Cannot change")
+            ? 400
+            : 500;
     res.status(status).json({ error: message });
   }
 });
@@ -174,7 +198,7 @@ router.post("/:id/hire", authMiddleware, async (req, res) => {
   try {
     const application = await applicationService.hireCandidate(
       req.params.id,
-      req.user!
+      req.user!,
     );
     res.json(application);
   } catch (error) {
@@ -183,10 +207,10 @@ router.post("/:id/hire", authMiddleware, async (req, res) => {
       message === "Application not found"
         ? 404
         : message.includes("only hire")
-        ? 403
-        : message.includes("already finalized")
-        ? 400
-        : 500;
+          ? 403
+          : message.includes("already finalized")
+            ? 400
+            : 500;
     res.status(status).json({ error: message });
   }
 });
@@ -204,7 +228,7 @@ router.post("/:id/reject", authMiddleware, async (req, res) => {
     const application = await applicationService.rejectCandidate(
       req.params.id,
       reason,
-      req.user!
+      req.user!,
     );
 
     res.json(application);
@@ -214,10 +238,10 @@ router.post("/:id/reject", authMiddleware, async (req, res) => {
       message === "Application not found"
         ? 404
         : message.includes("only reject")
-        ? 403
-        : message.includes("already finalized")
-        ? 400
-        : 500;
+          ? 403
+          : message.includes("already finalized")
+            ? 400
+            : 500;
     res.status(status).json({ error: message });
   }
 });
@@ -236,7 +260,7 @@ router.patch("/:id/notes", authMiddleware, async (req, res) => {
       req.params.id,
       notes,
       score,
-      req.user!
+      req.user!,
     );
 
     res.json(application);
@@ -246,8 +270,8 @@ router.patch("/:id/notes", authMiddleware, async (req, res) => {
       message === "Application not found"
         ? 404
         : message.includes("only update")
-        ? 403
-        : 500;
+          ? 403
+          : 500;
     res.status(status).json({ error: message });
   }
 });
