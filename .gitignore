@@ -1,6 +1,36 @@
-node_modules
-.DS_Store
-dist
+# ====================
+# Dependencies
+# ====================
+node_modules/
+
+# ====================
+# Build Output
+# ====================
+dist/
+
+# ====================
+# Environment
+# ====================
 .env
+.env.local
+.env.*.local
+
+# ====================
+# OS & IDE
+# ====================
+.DS_Store
 .bun/
+
+# ====================
+# Agent DOE Framework
+# ====================
+# Memory and plan are volatile state (not versioned)
+# Only directives/ is committed to git
+.agent/memory/
+.agent/plan/
+
+# ====================
+# Reference Files
+# ====================
+# External projects used only for reference patterns
 reference-purposes-only/
