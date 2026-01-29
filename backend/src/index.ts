@@ -6,6 +6,7 @@ import jobRoutes from "./routes/job.routes";
 import applicationRoutes from "./routes/application.routes";
 import userRoutes from "./routes/user.routes";
 import { config } from "./config/config";
+import { errorHandler } from "./middlewares/error.middleware";
 
 const app = express();
 const port = config.app.port;
@@ -29,6 +30,9 @@ app.use("/api/users", userRoutes);
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date() });
 });
+
+// Global error handler (must be LAST middleware)
+app.use(errorHandler);
 
 app.listen(config.app.port, () => {
   console.log(
