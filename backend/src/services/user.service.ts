@@ -1,9 +1,18 @@
 import { prisma } from "../libs/prisma";
 import type { User, Prisma } from "@prisma/client";
-import type { ListUsersDto, UserWithoutPassword } from "@shared/types";
+import type {
+  ListUsersDto,
+  UserWithoutPassword,
+  UpdateProfileDto,
+} from "@shared/types";
 import type { PaginatedResponse } from "../types/pagination.types";
 import { sanitizePrismaQuery } from "../utils/sanitize-prisma-query.util";
 import { setQueryDefaults } from "../utils/prisma-query.utils";
+import {
+  NotFoundError,
+  ValidationError,
+  ConflictError,
+} from "../errors/app.error";
 
 class UserService {
   /**
@@ -48,6 +57,67 @@ class UserService {
       count,
       query: safeQuery,
     };
+  }
+
+  /**
+   * Update user profile (firstName, lastName, email)
+   * Requires currentPassword verification for security
+   */
+  async updateProfile(
+    userId: string,
+    data: UpdateProfileDto,
+  ): Promise<UserWithoutPassword> {
+    // First, get the user to verify password
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundError("Utente non trovato");
+    }
+
+    // Verify current password
+    const { verifyPassword } = await import("../utils/hash.util");
+    const isPasswordValid = await verifyPassword(
+      data.currentPassword,
+      existingUser.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new ValidationError("Password non corretta");
+    }
+
+    // Check if email is being changed and if new email already exists
+    if (data.email !== existingUser.email) {
+      const emailExists = await prisma.user.findUnique({
+        where: { email: data.email },
+      });
+
+      if (emailExists) {
+        throw new ConflictError("Questa email è già in uso");
+      }
+    }
+
+    // Update the user
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return user as UserWithoutPassword;
   }
 }
 
