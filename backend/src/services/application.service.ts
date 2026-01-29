@@ -12,6 +12,12 @@ import {
   removeRestrictedFields,
   setQueryDefaults,
 } from "../utils/prisma-query.utils";
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+  ConflictError,
+} from "../errors/app.error";
 
 class ApplicationService {
   /**
@@ -49,7 +55,9 @@ class ApplicationService {
           where: { id: where.jobId as string },
         });
         if (job && job.createdById !== user.id) {
-          throw new Error("You can only view applications for your jobs");
+          throw new ForbiddenError(
+            "You can only view applications for your jobs",
+          );
         }
         safeQuery.where = { ...where, jobId: where.jobId };
       } else {
@@ -122,7 +130,7 @@ class ApplicationService {
     });
 
     if (!application) {
-      throw new Error("Application not found");
+      throw new NotFoundError("Application not found");
     }
 
     // RBAC check
@@ -131,7 +139,7 @@ class ApplicationService {
     }
 
     if (user.role === "RECRUITER" && application.job.createdById !== user.id) {
-      throw new Error("You can only view applications for your jobs");
+      throw new ForbiddenError("You can only view applications for your jobs");
     }
 
     return application;
@@ -158,7 +166,7 @@ class ApplicationService {
     });
 
     if (existing) {
-      throw new Error("You have already applied to this job");
+      throw new ConflictError("You have already applied to this job");
     }
 
     // Check if job exists and is PUBLISHED
@@ -167,11 +175,11 @@ class ApplicationService {
     });
 
     if (!job) {
-      throw new Error("Job not found");
+      throw new NotFoundError("Job not found");
     }
 
     if (job.status !== "PUBLISHED") {
-      throw new Error("This job is not accepting applications");
+      throw new ValidationError("This job is not accepting applications");
     }
 
     // Upload CV to MinIO
@@ -211,7 +219,7 @@ class ApplicationService {
     });
 
     if (!application) {
-      throw new Error("Application not found");
+      throw new NotFoundError("Application not found");
     }
 
     // Ownership check
@@ -221,7 +229,9 @@ class ApplicationService {
 
     // Check if already final
     if (application.workflowStatus === "DONE") {
-      throw new Error("Cannot change status of finalized application");
+      throw new ValidationError(
+        "Cannot change status of finalized application",
+      );
     }
 
     return prisma.application.update({
@@ -243,16 +253,16 @@ class ApplicationService {
     });
 
     if (!application) {
-      throw new Error("Application not found");
+      throw new NotFoundError("Application not found");
     }
 
     // Ownership check
     if (user.role !== "ADMIN" && application.job.createdById !== user.id) {
-      throw new Error("You can only hire for your jobs");
+      throw new ForbiddenError("You can only hire for your jobs");
     }
 
     if (application.workflowStatus === "DONE") {
-      throw new Error("Application already finalized");
+      throw new ValidationError("Application already finalized");
     }
 
     return prisma.application.update({
@@ -278,16 +288,16 @@ class ApplicationService {
     });
 
     if (!application) {
-      throw new Error("Application not found");
+      throw new NotFoundError("Application not found");
     }
 
     // Ownership check
     if (user.role !== "ADMIN" && application.job.createdById !== user.id) {
-      throw new Error("You can only reject for your jobs");
+      throw new ForbiddenError("You can only reject for your jobs");
     }
 
     if (application.workflowStatus === "DONE") {
-      throw new Error("Application already finalized");
+      throw new ValidationError("Application already finalized");
     }
 
     return prisma.application.update({
@@ -315,7 +325,7 @@ class ApplicationService {
     });
 
     if (!application) {
-      throw new Error("Application not found");
+      throw new NotFoundError("Application not found");
     }
 
     // Ownership check
@@ -346,7 +356,7 @@ class ApplicationService {
     });
 
     if (!application) {
-      throw new Error("Application not found");
+      throw new NotFoundError("Application not found");
     }
 
     // RBAC check
@@ -355,7 +365,9 @@ class ApplicationService {
     }
 
     if (user.role === "RECRUITER" && application.job.createdById !== user.id) {
-      throw new Error("You can only view CVs for applications to your jobs");
+      throw new ForbiddenError(
+        "You can only view CVs for applications to your jobs",
+      );
     }
 
     // Generate presigned URL (valid for 24h)

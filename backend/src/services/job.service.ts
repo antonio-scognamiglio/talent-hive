@@ -12,6 +12,7 @@ import {
   addORConstraints,
   setQueryDefaults,
 } from "../utils/prisma-query.utils";
+import { NotFoundError, ForbiddenError } from "../errors/app.error";
 
 class JobService {
   /**
@@ -73,12 +74,12 @@ class JobService {
     });
 
     if (!job) {
-      throw new Error("Job not found");
+      throw new NotFoundError("Job not found");
     }
 
     // RBAC: CANDIDATE can only see PUBLISHED
     if (user.role === "CANDIDATE" && job.status !== "PUBLISHED") {
-      throw new Error("Job not found");
+      throw new NotFoundError("Job not found");
     }
 
     return job;
@@ -112,12 +113,12 @@ class JobService {
     });
 
     if (!job) {
-      throw new Error("Job not found");
+      throw new NotFoundError("Job not found");
     }
 
     // Ownership check
     if (job.createdById !== user.id && user.role !== "ADMIN") {
-      throw new Error("You can only update jobs you created");
+      throw new ForbiddenError("You can only update jobs you created");
     }
 
     return prisma.job.update({
@@ -136,12 +137,12 @@ class JobService {
     });
 
     if (!job) {
-      throw new Error("Job not found");
+      throw new NotFoundError("Job not found");
     }
 
     // Ownership check
     if (job.createdById !== user.id && user.role !== "ADMIN") {
-      throw new Error("You can only archive jobs you created");
+      throw new ForbiddenError("You can only archive jobs you created");
     }
 
     return prisma.job.update({
