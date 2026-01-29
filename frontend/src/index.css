@@ -84,11 +84,14 @@
 
   /* Professional Box Shadows */
   --shadow-sm: 0 1px 2px 0 hsl(215 25% 15% / 0.05);
-  --shadow-md: 0 4px 6px -1px hsl(215 25% 15% / 0.1),
+  --shadow-md:
+    0 4px 6px -1px hsl(215 25% 15% / 0.1),
     0 2px 4px -1px hsl(215 25% 15% / 0.06);
-  --shadow-lg: 0 10px 15px -3px hsl(215 25% 15% / 0.1),
+  --shadow-lg:
+    0 10px 15px -3px hsl(215 25% 15% / 0.1),
     0 4px 6px -2px hsl(215 25% 15% / 0.05);
-  --shadow-xl: 0 20px 25px -5px hsl(215 25% 15% / 0.1),
+  --shadow-xl:
+    0 20px 25px -5px hsl(215 25% 15% / 0.1),
     0 10px 10px -5px hsl(215 25% 15% / 0.04);
   --shadow-professional: 0 4px 20px -2px hsl(200 90% 40% / 0.15);
 
@@ -240,12 +243,12 @@
 
   /* Dark mode shadows */
   --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.25);
-  --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.25),
-    0 2px 4px -1px hsl(0 0% 0% / 0.15);
-  --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.25),
-    0 4px 6px -2px hsl(0 0% 0% / 0.15);
-  --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.25),
-    0 10px 10px -5px hsl(0 0% 0% / 0.15);
+  --shadow-md:
+    0 4px 6px -1px hsl(0 0% 0% / 0.25), 0 2px 4px -1px hsl(0 0% 0% / 0.15);
+  --shadow-lg:
+    0 10px 15px -3px hsl(0 0% 0% / 0.25), 0 4px 6px -2px hsl(0 0% 0% / 0.15);
+  --shadow-xl:
+    0 20px 25px -5px hsl(0 0% 0% / 0.25), 0 10px 10px -5px hsl(0 0% 0% / 0.15);
   --shadow-professional: 0 4px 20px -2px hsl(200 90% 60% / 0.25);
 
   --color-sidebar-background: hsl(215 25% 6%);
@@ -329,12 +332,12 @@
   /* Professional Button Variants */
   .btn-professional {
     background: var(--gradient-primary);
-    @apply hover:shadow-[var(--shadow-professional)] transition-all duration-300 cursor-pointer;
+    @apply hover:shadow-(--shadow-professional) transition-all duration-300 cursor-pointer;
   }
 
   .btn-accent {
     background: var(--gradient-accent);
-    @apply hover:shadow-[var(--shadow-professional)] transition-all duration-300;
+    @apply hover:shadow-(--shadow-professional) transition-all duration-300;
   }
 
   /* Professional Card Variants */
