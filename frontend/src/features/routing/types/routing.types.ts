@@ -112,11 +112,11 @@ export interface UserMenuProps {
   onLogout?: () => void;
 
   // Props di presentazione
-  variant?: string;
-  avatarDisplay?: string;
-  subtitleContent?: string;
-  dropdownSide?: string;
-  dropdownAlign?: string;
+  variant?: "default" | "compact" | "minimal" | "mobile-drawer";
+  avatarDisplay?: "initials" | "icon" | "image";
+  subtitleContent?: "email" | "role" | "custom";
+  dropdownSide?: "top" | "bottom" | "left" | "right";
+  dropdownAlign?: "start" | "center" | "end";
   showSettings?: boolean;
   showProfile?: boolean;
   showName?: boolean;

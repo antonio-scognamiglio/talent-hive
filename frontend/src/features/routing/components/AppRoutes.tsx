@@ -7,6 +7,7 @@ import { getLayoutConfig } from "@/features/shared/config/layout.config";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 import { useIsMobile } from "@/features/shared/hooks/useIsMobile";
 import { ThemeToggle } from "@/features/shared/components/ThemeToggle";
+import { UserMenu } from "@/features/shared/components/UserMenu";
 
 import type { RouteLayoutContext } from "@/features/routing/types";
 import { getRoutesForRole } from "@/features/routing/utils/route-helpers";
@@ -35,7 +36,7 @@ export function AppRoutes() {
   // Ottieni configurazione layout per il ruolo corrente (con supporto responsive)
   const layoutConfig = useMemo(
     () => (userRole ? getLayoutConfig(userRole, isMobile) : null),
-    [userRole, isMobile]
+    [userRole, isMobile],
   );
 
   // Memoizza additionalActions (ThemeToggle, ecc.)
@@ -46,7 +47,7 @@ export function AppRoutes() {
         <ThemeToggle />
       </>
     ),
-    []
+    [],
   );
 
   // Memoizza layoutWrapper per evitare re-render infiniti
@@ -59,6 +60,7 @@ export function AppRoutes() {
             config={layoutConfig ?? undefined}
             user={user}
             routes={userRoutes}
+            UserMenuComponent={UserMenu}
             isMobile={isMobile}
             additionalActions={additionalActions}
           >
@@ -84,7 +86,7 @@ export function AppRoutes() {
       // Nessun layout - usa Suspense esterno
       return children;
     },
-    [layoutConfig, user, userRoutes, isMobile, additionalActions]
+    [layoutConfig, user, userRoutes, isMobile, additionalActions],
   );
 
   return (

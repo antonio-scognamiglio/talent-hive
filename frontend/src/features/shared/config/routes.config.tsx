@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Briefcase } from "lucide-react";
+import { Briefcase, Settings } from "lucide-react";
 import { USER_ROLES, type UserRole } from "@/features/shared/types/roles.types";
 import type { RouteGroup } from "@/features/routing/types";
 import { Navigate } from "react-router-dom";
@@ -14,6 +14,9 @@ const CandidateJobDetailPage = lazy(
 );
 const RecruiterJobsPage = lazy(() => import("@/pages/jobs/RecruiterJobsPage"));
 const AdminJobsPage = lazy(() => import("@/pages/jobs/AdminJobsPage"));
+
+// Account pages
+const SettingsPage = lazy(() => import("@/pages/settings/SettingsPage"));
 
 // ==========================================================================
 // PROTECTED ROUTES CONFIGURATION
@@ -109,6 +112,38 @@ export const PROTECTED_ROUTE_GROUPS: RouteGroup<UserRole>[] = [
           showInSidebar: true,
           sidebarOrder: 1,
           description: "Gestisci tutti gli annunci di lavoro",
+        },
+      },
+    ],
+  },
+
+  // ==========================================================================
+  // ACCOUNT & SETTINGS
+  // ==========================================================================
+  {
+    name: "Account",
+    allowedRoles: [
+      USER_ROLES.CANDIDATE,
+      USER_ROLES.RECRUITER,
+      USER_ROLES.ADMIN,
+    ],
+    icon: Settings, // Importato da lucide-react
+    order: 100, // Bottom of list
+    routes: [
+      {
+        path: "/settings",
+        element: SettingsPage,
+        allowedRoles: [
+          USER_ROLES.CANDIDATE,
+          USER_ROLES.RECRUITER,
+          USER_ROLES.ADMIN,
+        ],
+        layout: "sidebar",
+        meta: {
+          title: "Impostazioni",
+          icon: Settings,
+          showInSidebar: true,
+          description: "Gestisci le tue impostazioni",
         },
       },
     ],
