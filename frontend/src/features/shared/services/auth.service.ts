@@ -1,6 +1,12 @@
 import { apiClient } from "@/features/shared/api";
 import type { AuthMeResponseDto } from "@/features/auth/types/auth-me.types";
-import type { LoginDto, RegisterDto } from "@shared/types";
+import {
+  type LoginDto,
+  type RegisterDto,
+  type User,
+  type UpdateProfileDto,
+  type ChangePasswordDto,
+} from "@shared/types";
 
 export const authService = {
   /**
@@ -11,7 +17,7 @@ export const authService = {
   login: async (credentials: LoginDto) => {
     const { data } = await apiClient.post<{ message: string }>(
       "/auth/login",
-      credentials
+      credentials,
     );
     return data;
   },
@@ -49,8 +55,21 @@ export const authService = {
   register: async (dto: RegisterDto) => {
     const { data } = await apiClient.post<{ message: string }>(
       "/auth/register",
-      dto
+      dto,
     );
     return data;
+  },
+
+  /**
+   * Change user password
+   * Requires current password for verification
+   */
+  changePassword: async (data: ChangePasswordDto): Promise<void> => {
+    await apiClient.post("/auth/change-password", data);
+  },
+
+  updateProfile: async (data: UpdateProfileDto): Promise<User> => {
+    const response = await apiClient.put<User>("/users/profile", data);
+    return response.data;
   },
 };

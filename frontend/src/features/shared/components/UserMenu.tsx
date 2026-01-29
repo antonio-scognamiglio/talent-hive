@@ -148,8 +148,8 @@ export const UserMenu: React.FC<UserMenuProps> = ({
     (subtitleContent === "email"
       ? me.email
       : userRole
-      ? getRoleDisplayName(userRole)
-      : "");
+        ? getRoleDisplayName(userRole)
+        : "");
 
   // Handle logout (deve essere definito prima del variant mobile-drawer)
   const handleLogout = async () => {
@@ -384,9 +384,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             className={cn(
               "w-full justify-start gap-3 *:whitespace-normal",
               variant === "default" && "h-auto py-3",
-              variant === "compact" && "h-10 py-2",
+              variant === "compact" && "h-10 py-2 px-2",
               variant === "minimal" && "h-9 w-9 p-0 justify-center",
-              buttonClassName
+              buttonClassName,
             )}
           >
             {buttonContent}

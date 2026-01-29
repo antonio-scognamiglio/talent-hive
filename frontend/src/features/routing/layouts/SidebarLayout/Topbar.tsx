@@ -105,7 +105,7 @@ export function Topbar<TUser = any>({
 
         {/* UserMenu: Mostra solo se configurato */}
         {user && config?.showUserMenuInTopbar && (
-          <div className="ml-2">
+          <div>
             {userMenuSlot ? (
               userMenuSlot
             ) : UserMenuComponent ? (

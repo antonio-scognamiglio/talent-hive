@@ -1,3 +1,4 @@
+import path from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -32,7 +33,7 @@ function blockRestrictedImports(): Plugin {
               `🚫 Import non consentito trovato in ${id}:${errorLine}\n` +
                 `   Pattern trovato: ${match || "sconosciuto"}\n` +
                 `   La cartella reference-purposes-only/ è esclusa dalla build.\n` +
-                `   Usa gli equivalenti da @/features/shared invece.`
+                `   Usa gli equivalenti da @/features/shared invece.`,
             );
           }
         }
@@ -47,7 +48,8 @@ export default defineConfig({
   plugins: [react(), tsconfigPaths(), tailwindcss(), blockRestrictedImports()],
   resolve: {
     alias: {
-      "@shared": "../shared",
+      "@": path.resolve(__dirname, "./src"),
+      "@shared": path.resolve(__dirname, "../shared"),
     },
   },
 });
