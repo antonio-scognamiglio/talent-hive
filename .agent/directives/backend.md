@@ -78,12 +78,12 @@ class EntityService {
     });
 
     if (!entity) {
-      throw new Error("Entity not found");
+      throw new NotFoundError("Entity not found");
     }
 
     // RBAC check
     if (user.role === "CANDIDATE" && entity.userId !== user.id) {
-      throw new Error("Entity not found");
+      throw new NotFoundError("Entity not found");
     }
 
     return entity;
@@ -106,22 +106,22 @@ import { entityService } from "../services/entity.service";
 const router = Router();
 
 // List with Prisma query
-router.post("/list", authenticate, async (req, res) => {
+router.post("/list", authenticate, async (req, res, next) => {
   try {
     const result = await entityService.getEntities(req.body, req.user!);
     res.json(result);
   } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
+    next(error);
   }
 });
 
 // Get by ID
-router.get("/:id", authenticate, async (req, res) => {
+router.get("/:id", authenticate, async (req, res, next) => {
   try {
     const entity = await entityService.getEntityById(req.params.id, req.user!);
     res.json(entity);
   } catch (error) {
-    res.status(404).json({ error: (error as Error).message });
+    next(error);
   }
 });
 
@@ -130,12 +130,12 @@ router.post(
   "/",
   authenticate,
   authorize(["ADMIN", "RECRUITER"]),
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const entity = await entityService.createEntity(req.body, req.user!);
       res.status(201).json(entity);
     } catch (error) {
-      res.status(400).json({ error: (error as Error).message });
+      next(error);
     }
   },
 );
@@ -164,7 +164,7 @@ async getEntity(id: string, user: UserWithoutPassword) {
 
   // RBAC check
   if (user.role === "CANDIDATE" && entity.userId !== user.id) {
-    throw new Error("Not found");
+    throw new NotFoundError("Not found");
   }
 
   return entity;
@@ -244,16 +244,49 @@ async createWithFile(
 
 ## Error Handling
 
-```typescript
-// Services throw errors
-throw new Error("Application not found");
-throw new Error("You can only view your own applications");
+### Pattern
 
-// Routes catch and respond
-try {
-  const result = await service.method();
-  res.json(result);
-} catch (error) {
-  res.status(400).json({ error: (error as Error).message });
+1. **Custom Errors**: Use classes from `backend/src/errors/app.error.ts`.
+2. **Services**: Throw specific errors (`ValidationError`, `NotFoundError`, etc.).
+3. **Routes**: Use `try/catch` and pass errors to `next(error)` (or rely on `express-async-errors`).
+4. **Middleware**: Global `errorHandler` formats response.
+
+### Service Example
+
+```typescript
+import { NotFoundError, ForbiddenError } from "../errors/app.error";
+
+async getEntity(id: string, user: UserWithoutPassword) {
+  const entity = await prisma.entity.findUnique({ where: { id } });
+
+  if (!entity) {
+    throw new NotFoundError("Entity not found");
+  }
+
+  // RBAC check
+  if (user.role === "CANDIDATE" && entity.userId !== user.id) {
+    throw new ForbiddenError("Access denied");
+  }
+
+  return entity;
 }
+```
+
+### Route Example
+
+```typescript
+import { Router, NextFunction, Request, Response } from "express";
+
+router.get(
+  "/:id",
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await entityService.getEntity(req.params.id, req.user!);
+      res.json(result);
+    } catch (error) {
+      next(error); // Pass to global error handler
+    }
+  },
+);
 ```
