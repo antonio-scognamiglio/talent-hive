@@ -28,6 +28,7 @@ dist/
 # Only directives/ is committed to git
 .agent/memory/
 .agent/plan/
+.agent/brain/
 
 # ====================
 # Reference Files
