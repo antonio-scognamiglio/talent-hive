@@ -15,3 +15,12 @@ export interface RegisterDto {
   firstName: string;
   lastName: string;
 }
+
+/**
+ * DTO for changing password
+ */
+export interface ChangePasswordDto {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
