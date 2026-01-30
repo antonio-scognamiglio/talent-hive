@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Briefcase, Settings } from "lucide-react";
+import { Briefcase, Settings, FileText } from "lucide-react";
 import { USER_ROLES, type UserRole } from "@/features/shared/types/roles.types";
 import type { RouteGroup } from "@/features/routing/types";
 import { Navigate } from "react-router-dom";
@@ -11,6 +11,9 @@ import { Navigate } from "react-router-dom";
 const CandidateJobsPage = lazy(() => import("@/pages/jobs/CandidateJobsPage"));
 const CandidateJobDetailPage = lazy(
   () => import("@/pages/jobs/CandidateJobDetailPage"),
+);
+const CandidateApplicationsPage = lazy(
+  () => import("@/pages/candidate/CandidateApplicationsPage"),
 );
 const RecruiterJobsPage = lazy(() => import("@/pages/jobs/RecruiterJobsPage"));
 const AdminJobsPage = lazy(() => import("@/pages/jobs/AdminJobsPage"));
@@ -112,6 +115,31 @@ export const PROTECTED_ROUTE_GROUPS: RouteGroup<UserRole>[] = [
           showInSidebar: true,
           sidebarOrder: 1,
           description: "Gestisci tutti gli annunci di lavoro",
+        },
+      },
+    ],
+  },
+
+  // ==========================================================================
+  // APPLICATIONS - Candidate applications tracking
+  // ==========================================================================
+  {
+    name: "Applications",
+    allowedRoles: [USER_ROLES.CANDIDATE],
+    icon: FileText,
+    order: 2,
+    routes: [
+      {
+        path: "/applications",
+        element: CandidateApplicationsPage,
+        allowedRoles: [USER_ROLES.CANDIDATE],
+        layout: "sidebar",
+        meta: {
+          title: "Le Mie Candidature",
+          icon: FileText,
+          showInSidebar: true,
+          sidebarOrder: 2,
+          description: "Visualizza lo stato delle tue candidature",
         },
       },
     ],

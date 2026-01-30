@@ -26,9 +26,9 @@ dist/
 # ====================
 # Memory and plan are volatile state (not versioned)
 # Only directives/ is committed to git
-.agent/memory/
-.agent/plan/
-.agent/brain/
+# .agent/memory/
+# .agent/plan/
+# .agent/brain/
 
 # ====================
 # Reference Files

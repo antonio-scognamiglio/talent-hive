@@ -46,6 +46,8 @@ export const useJobs = ({
     prismaQuery: defaultPrismaQuery,
     enabled: isQueryEnabled,
     queryKeyFactory: queryKeys.jobs.list,
+    onError: (error) =>
+      handleError(error, "Errore durante il caricamento degli annunci"),
   });
 
   const createJobMutation = useMutation({

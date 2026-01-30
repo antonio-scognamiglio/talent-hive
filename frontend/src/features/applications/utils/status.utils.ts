@@ -92,3 +92,16 @@ export const getCandidateStatusColor = (
   // Fallback (non dovrebbe succedere se i tipi sono corretti)
   return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
 };
+
+/**
+ * Returns the solid color class for the status indicator stripe.
+ * deterministic mapping for "border-l-4" or standalone indicator divs.
+ */
+export const getCandidateIndicatorColor = (
+  finalDecision: string | null | undefined,
+): string => {
+  if (!finalDecision) return "bg-blue-500"; // In valutazione
+  if (finalDecision === "HIRED") return "bg-emerald-500"; // Assunto
+  if (finalDecision === "REJECTED") return "bg-red-500"; // Non selezionato
+  return "bg-gray-500"; // Fallback
+};
