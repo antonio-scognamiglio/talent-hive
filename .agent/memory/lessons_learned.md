@@ -74,7 +74,8 @@ Ogni lezione segue questo formato:
 **Correzione**: Usare- **Dialog**: Quando si usa `CustomDialog` con form, usare pattern `smartAutoClose` + `onDirtyChange` (vedi `ChangePasswordDialog`).
 
 - **Vite Monorepo**: Usa sempre `path.resolve` per gli alias in `vite.config.ts` (es: `@shared: path.resolve(__dirname, "../shared")`) per evitare errori di risoluzione.
-- **Shared DTOs**: Assicurarsi sempre di avere un `index.ts` che esporta tutto nelle sottocartelle (es: `shared/types/dto/index.ts`) per evitare `Module has no exported member`.
+- **Refactoring Utils**: Quando si rinominano funzioni di utility (es. `getJobStatusBadgeClasses` -> `getJobStatusVariant`), cercare sempre tutte le occorrenze nel progetto (`grep`) prima di confermare, per evitare rotture in componenti non toccati direttamente.
+- **UI Patterns**: Per le tabelle, usare sempre il pattern `Toolbar` (per azioni/filtri) + `ContentCard` (wrapper per la tabella). Non rimuovere la Toolbar pensando che ContentCard la sostituisca. Vedi `SupportTickets.tsx` come reference.
 
 ### 2026-01-29 - useDialog Hook
 
@@ -162,3 +163,35 @@ Ogni lezione segue questo formato:
 **Contesto**: Rendering del logo in modalità Light/Dark.
 **Errore**: `Logo` aveva un default statico (`variant="dark"`) che caricava l'icona bianca, invisibile su sfondo bianco (default app).
 **Correzione**: Implementata logica "smart" in `Logo.tsx` usando `useTheme`. Se `variant` non è passata, rileva il tema corrente e sceglie l'icona opposta (sfondo chiaro -> icona scura, e viceversa). Rimuovere default statici pericolosi.
+
+### 2026-01-30 - Width Fissi nei Filtri Vietati
+
+**Contesto**: Styling dei filtri in `Toolbar` (`JobStatusFilter`).
+**Errore**: Usato `w-[200px]` nel componente e nella pagina, violando direttive frontend.
+**Correzione**:
+
+1. Componente interno (`SelectTrigger`) -> Sempre `w-full`.
+2. Componente esterno (`Toolbar`) -> Usare `flex-X min-w-XX` per responsiveness (es. `flex-1 min-w-40`).
+
+### 2026-01-30 - Spread Props in PaginationWrapper
+
+**Contesto**: Refactoring `RecruiterJobsPage` per usare `CustomTableStyled`.
+**Errore**: Destrutturato props esplicitamente (`{ data: jobs, isLoading, ...paginationProps }`) e aggiunto `onRowClick` non richiesto dall'utente.
+**Correzione**: Usare SEMPRE `{(props) => <CustomTableStyled {...props} columns={columns} emptyState={customEmptyState} />}`. Non aggiungere props non richieste.
+
+### 2026-01-30 - Non consultato lessons_learned.md
+
+**Contesto**: Inizio lavoro su nuova feature.
+**Errore**: Non ho letto `lessons_learned.md` prima di iniziare, ripetendo errori già documentati.
+**Correzione**: All'inizio di ogni sessione o task, leggere **SEMPRE** le ultime 10 entry di `lessons_learned.md` per evitare errori ricorrenti.
+
+### 2026-01-30 - React Sync State Anti-Pattern (useEffect vs Key)
+
+**Contesto**: Debugging del reset filtri ("Azzera filtri" button).
+**Errore**: `useEffect` usato per sincronizzare Input state ↔ URL. Causava race condition dove l'effetto ripristinava vecchi valori prima che l'URL fosse aggiornato, e re-render loop/blinking.
+**Correzione**:
+
+1. Rimuovere `useEffect` di sincronizzazione.
+2. Usare **Key-Based Reset**: Parent passa `key={resetKey}` ai filtri.
+3. Reset incrementa `resetKey` → React rimonta i componenti → Stato riparte pulito (`useState` inizializza con valori fresh).
+   **Regola Agente**: "Se puoi evitare un useEffect, evitalo." (Aggiunto a `frontend.md`).

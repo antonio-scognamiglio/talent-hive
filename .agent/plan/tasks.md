@@ -10,9 +10,65 @@
 
 ## 🚀 In Corso
 
+- [x] **BugFix: Reset Filters**
+  - Risolto bug "Reset filtri" su `RecruiterJobsPage` e `CandidateJobsPage`
+  - Implementato pattern "Key-Based Reset"
+  - Rimosso `useEffect` sync anti-pattern
+
 ## 📋 To-Do (Backlog)
 
+- [ ] **Feature: Job Detail Dialog (Recruiter)**
+
+  **Pattern UX Consolidato**: "Inline Edit Modal" (usato da Notion, Airtable, Trello, Linear, HubSpot)
+
+  **Azioni sulla Tabella Jobs**:
+  | Azione | UI | Comportamento |
+  |--------|-----|---------------|
+  | Click Row | — | Apre Dialog (View → Edit) |
+  | 🗑️ Trash | Quick Action | Confirmation Dialog → Archivia |
+
+  _Rimuovere Eye e Pencil dalla tabella. Solo Trash come quick action._
+
+  **Dialog Job (due stati)**:
+
+  **Stato VIEW (default)**:
+  - Header: Titolo Job + [X] close
+  - Body: Status (badge), Località, Salario, Descrizione (read-only)
+  - Footer: `[🗑️ Elimina]  [✏️ Modifica]  [→ Kanban]`
+  - Statistiche: "📊 12 candidature" (count già implementato)
+
+  **Stato EDIT (dopo click su Modifica)**:
+  - Header: "Modifica Annuncio" + [X] close
+  - Body: Form con Status (dropdown), Titolo, Località, Salario, Descrizione (textarea)
+  - Footer: `[Annulla]  [💾 Salva]`
+
+  **Comportamenti**:
+  - Click row → Apre Dialog in stato VIEW
+  - Pulsante "Modifica" → Switcha a stato EDIT (form editabile)
+  - Pulsante "Salva" → Chiama updateJob, chiude dialog, torna a tabella
+  - Pulsante "Annulla" → Torna a stato VIEW senza salvare
+  - Pulsante "Elimina" → Confirmation Dialog → Archivia job
+  - Pulsante "Kanban" → Naviga a `/kanban` (gestione workflow candidature)
+
+  **Kanban**:
+  - Per MVP: Kanban globale (mostra tutte le candidature di tutti i job)
+  - Il filtro per job è un enhancement post-MVP
+
+  **Sub-tasks**:
+  - [ ] Rimuovere Eye e Pencil dalla colonna azioni (tenere solo Trash)
+  - [ ] Aggiungere `onRowClick` alla tabella
+  - [ ] Creare `JobDetailDialog` con stato VIEW
+  - [ ] Implementare stato EDIT con form
+  - [ ] Integrare azioni (Elimina, Modifica, Salva, Kanban)
+
 ## ✅ Completate
+
+- [x] **Feature: Recruiter Jobs Page**
+  - [x] Porting `CustomTable` & Utilities
+  - [x] Update `useJobFilters` (add Status support)
+  - [x] Implement `RecruiterJobsPage` with Table
+  - [x] Aggiunto conteggio candidature (`_count.applications`) in tabella
+  - [x] Creato tipo `JobWithCount` per type-safety
 
 - [x] **Feature: Candidate Applications List Page**
   - [x] Creare hook `useApplications` con paginazione e filtri

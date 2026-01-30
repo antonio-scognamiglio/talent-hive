@@ -66,8 +66,8 @@ Ogni feature in `src/features/{feature-name}/` con:
   }
   rightContent={
     <>
-      {/* Reset Button adiacente al Refresh - sempre visibile, disabilitato se non serve */}
-      <PrimaryButton
+      {/* Reset Button (Primo a sinistra nel rightContent) */}
+      <GhostButton
         text="Azzera filtri"
         onClick={resetFilters}
         disabled={activeFiltersCount === 0}
@@ -80,10 +80,11 @@ Ogni feature in `src/features/{feature-name}/` con:
 
 ### Reset Filters
 Quando sono presenti filtri, DEVE essere presente un pulsante di reset:
-1.  **Placement**: `rightContent` del Toolbar, subito prima del `RefreshButton`.
-2.  **Component**: `PrimaryButton` (stile default primary).
-3.  **Stato**: Sempre visibile, `disabled` se `activeFiltersCount === 0`.
-4.  **Hook**: Il custom hook dei filtri (`useXxxFilters`) deve esporre `resetFilters` e `activeFiltersCount`.
+1.  **Placement**: `rightContent` del Toolbar, come **PRIMO** elemento.
+2.  **Order**: Reset Filters → RefreshButton → Primary Actions (es. "Crea").
+3.  **Component**: `GhostButton` (stile minimale).
+4.  **Stato**: Sempre visibile, `disabled` se `activeFiltersCount === 0`.
+5.  **Hook**: Il custom hook dei filtri (`useXxxFilters`) deve esporre `resetFilters` e `activeFiltersCount`.
 ```
 
 **Perché flex + min-w?**
@@ -207,6 +208,142 @@ import { DetailPageHeader } from "@/features/shared/components/layout";
 
 ---
 
+## Table Patterns
+
+### Column Factory Pattern
+
+Per definire le configurazioni delle colonne per `CustomTable`, usare SEMPRE il pattern **Column Factory Function**.
+Questo approccio permette di iniettare dipendenze (es. callbacks, lingua, userid) e centralizza la logica di presentazione.
+
+**File**: `{feature}/utils/{entity}-columns.utils.tsx` (o `.ts` se non ritorna JSX)
+
+```tsx
+interface CreateJobColumnsConfigOptions {
+  onView?: (job: Job) => void;
+  onEdit?: (job: Job) => void;
+  onDelete?: (job: Job) => void;
+}
+
+/**
+ * Factory function per creare la configurazione delle colonne Jobs.
+ */
+export function createJobColumnsConfig({
+  onView,
+  onEdit,
+  onDelete,
+}: CreateJobColumnsConfigOptions): ColumnConfig<Job>[] {
+  // Helpers per rendering celle (mantengono pulito l'array columns)
+  const getStatusBadge = (status: Job["status"]) => {
+    return <Badge>{status}</Badge>;
+  };
+
+  const columns: ColumnConfig<Job>[] = [
+    {
+      key: "title",
+      header: "Titolo",
+      width: { default: 3 },
+      cell: (job) => <span className="font-bold">{job.title}</span>,
+    },
+    // ... altre colonne
+  ];
+
+  // Aggiungi azioni solo se i callback sono forniti
+  if (onView || onEdit || onDelete) {
+    columns.push({
+      key: "actions",
+      header: "",
+      width: { default: 1 },
+      align: "right",
+      cell: (job) => (
+        <div className="flex items-center justify-end gap-2">
+          {onView && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={() => onView(job)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Vedi dettagli</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {/* ... altri bottoni con tooltip ... */}
+        </div>
+      ),
+    });
+  }
+
+  return columns;
+}
+```
+
+**Utilizzo nella Pagina**:
+
+```tsx
+const columns = useMemo(
+  () =>
+    createJobColumnsConfig({
+      onView: (job) => navigate(`/jobs/${job.id}`),
+      onEdit: (job) => openDialog("edit", job),
+    }),
+  [navigate],
+);
+```
+
+---
+
+## PaginationWrapper + CustomTable Pattern
+
+Quando si usa `PaginationWrapperStyled` con `CustomTableStyled`:
+
+1. **SEMPRE spread props**: `{(props) => <CustomTableStyled {...props} ... />}`
+2. **Props aggiuntive dopo lo spread**: `columns` e `emptyState` sono le uniche props da aggiungere esplicitamente.
+3. **customEmptyState**: Definire SEMPRE un `customEmptyState` con `EmptyState` e icona appropriata.
+
+### Reference Pattern (COPIARE ESATTAMENTE):
+
+```tsx
+<PaginationWrapperStyled<Entity>
+  data={data}
+  isLoading={isLoading}
+  isError={isError}
+  error={error}
+  currentPage={currentPage}
+  totalPages={totalPages}
+  nextPage={nextPage}
+  prevPage={prevPage}
+  handlePageClick={handlePageClick}
+  pageSizeConfig={{ ... }}
+  totalItemsConfig={{ ... }}
+>
+  {(props) => {
+    const customEmptyState = (
+      <EmptyState
+        icon={<EntityIcon />}
+        title="Nessun elemento trovato"
+        description="Non ci sono elementi che corrispondono ai tuoi filtri."
+      />
+    );
+
+    return (
+      <CustomTableStyled<Entity>
+        {...props}
+        columns={columns}
+        emptyState={customEmptyState}
+      />
+    );
+  }}
+</PaginationWrapperStyled>
+```
+
+---
+
 ## State Components (Liste)
 
 Per le pagine lista, usare i componenti di stato corretti nel children render di `PaginationWrapper`:
@@ -302,6 +439,66 @@ const isActive = status === "active"; // NO useMemo needed
 ```
 
 **Regola**: Quando in dubbio, chiediti: "Questa funzione/variabile viene passata a child components o usata come dependency?". Se sì → usa useCallback/useMemo.
+
+---
+
+## React Anti-Patterns & Best Practices
+
+### ⚠️ useEffect Anti-Patterns
+
+Il 90% dei bug React proviene dall'uso errato di `useEffect`.
+
+**Regola d'Oro**: "Se puoi evitare un useEffect, evitalo."
+
+| Anti-Pattern            | Perché è sbagliato                                                            | Soluzione Corretta                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **Sync Props → State**  | Causa re-render inutili e loop di aggiornamento                               | Inizializza `useState(prop)`. Se prop cambia e serve reset, usa **Key-Based Reset**. |
+| **Sync URL ↔ State**    | Race conditions (URL aggiornato in ritardo, effetto ripristina vecchi valori) | Inizializza stato locale da URL. Aggiorna URL e Stato _insieme_ nell'handler.        |
+| **Trasformazione Dati** | Effetto a cascata                                                             | Fai la trasformazione nel render o con `useMemo`.                                    |
+
+### ✅ Key-Based Reset Pattern
+
+Invece di usare `useEffect` per "ascoltare" un reset o un cambio prop complesso:
+
+1. **Parent**: Gestisce una chiave (es. `resetKey` o `version`).
+2. **Parent**: Passa la chiave come prop `key` al componente child.
+3. **Reset**: Parent incrementa la chiave.
+4. **React**: Smonta e rimonta il child → stato locale riparte da zero (pulito).
+
+```tsx
+// ❌ SBAGLIATO (Sync Effect)
+function SearchInput({ value }) {
+  const [term, setTerm] = useState(value);
+
+  // Causa loop, blinking, e race conditions
+  useEffect(() => {
+    setTerm(value);
+  }, [value]);
+}
+
+// ✅ CORRETTO (Key-Based Reset)
+function Parent() {
+  const [resetKey, setResetKey] = useState(0);
+
+  const handleReset = () => {
+    setResetKey((k) => k + 1); // Incrementa key
+    setFilterValue(undefined); // Pulisce stato parent
+  };
+
+  return (
+    <SearchInput
+      key={`search-${resetKey}`} // Forza remount al reset
+      initialValue={filterValue}
+    />
+  );
+}
+
+function SearchInput({ initialValue }) {
+  // Stato nasce pulito ad ogni remount
+  const [term, setTerm] = useState(initialValue);
+  // NESSUN useEffect di sync necessario!
+}
+```
 
 ---
 
