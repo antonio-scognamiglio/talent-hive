@@ -157,8 +157,8 @@ Ogni lezione segue questo formato:
 **Errore**: `useApplications` non passava `onError` a `usePaginationForGen`, errori silenziosi.
 **Correzione**: SEMPRE passare `onError: (error) => handleError(error, "Messaggio errore")` a `usePaginationForGen`. L'utente deve vedere toast su ogni errore di caricamento lista.
 
-### 2026-01-30 - ErrorState vs EmptyState per Errori
+### 2026-01-30 - Logo Theme Awareness
 
-**Contesto**: Pagina lista mostrava "Nessun elemento" quando il caricamento falliva con errore 500.
-**Errore**: Usato solo `EmptyState` per `data.length === 0`, ignorando il caso `isError`.
-**Correzione**: Creato `ErrorState` componente separato con retry. Ordine condizioni: `isLoading ? Spinner : isError ? ErrorState : data.length === 0 ? EmptyState : Lista`. Documentato in `frontend.md`.
+**Contesto**: Rendering del logo in modalità Light/Dark.
+**Errore**: `Logo` aveva un default statico (`variant="dark"`) che caricava l'icona bianca, invisibile su sfondo bianco (default app).
+**Correzione**: Implementata logica "smart" in `Logo.tsx` usando `useTheme`. Se `variant` non è passata, rileva il tema corrente e sceglie l'icona opposta (sfondo chiaro -> icona scura, e viceversa). Rimuovere default statici pericolosi.
