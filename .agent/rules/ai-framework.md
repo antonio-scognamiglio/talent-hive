@@ -24,9 +24,13 @@ L'agente **DEVE** seguire questo protocollo per mantenere la memoria del progett
 
 ### 1. Inizio Sessione (BOOT)
 
-- Leggi `active_context.md` per capire dove eravamo.
-- Leggi `tasks.md` per vedere cosa c'è da fare.
-- Leggi `lessons_learned.md` (ultime 5 entry) per evitare errori recenti.
+**ESEGUIRE SEMPRE PRIMA DI QUALSIASI ALTRA AZIONE:**
+
+1. Leggi `active_context.md` per capire dove eravamo.
+2. Leggi `tasks.md` per vedere cosa c'è da fare.
+3. **⚠️ CRITICO**: Leggi `lessons_learned.md` (ultime **10** entry) per evitare errori già commessi.
+
+> **NOTA**: Saltare il punto 3 porta a ripetere errori già documentati. È la causa principale di inefficienze nelle sessioni.
 
 ### 2. Durante il Lavoro (EXECUTION)
 
