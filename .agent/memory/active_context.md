@@ -20,6 +20,8 @@
   - Page: `CandidateApplicationsPage` con pattern corretto.
   - Route: `/applications` per CANDIDATE in sidebar.
   - Guidelines: Hard Rules per stili deterministici e utilities date/page-sizes.
+  - **Filtri**: Implementati filtri responsive e tasto "Azzera filtri" smart.
+  - **Logo**: Fix auto-theme detection.
 
 ## Task In Corso
 
