@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 /**
  * useJobFilters Hook
  *
@@ -10,7 +9,7 @@
  * - Handler per cambiare i filtri
  */
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { PrismaQueryOptions } from "@/features/shared/types/prismaQuery.types";
 import type { Job } from "@shared/types";
 import {
@@ -27,6 +26,8 @@ export type JobUrlFilters = {
   searchTerm?: string;
   salaryMin?: number;
   salaryMax?: number;
+
+  status?: string;
   orderBy?: string;
 };
 
@@ -72,6 +73,12 @@ export const JOB_FILTER_PARAM_CONFIGS: FilterParamConfig<JobUrlFilters>[] = [
     serialize: (v) => (v !== undefined ? String(v) : null),
   },
   {
+    param: "status",
+    key: "status",
+    parse: (v) => (v ? v : undefined),
+    serialize: (v) => (v ? String(v) : null),
+  },
+  {
     param: "orderBy",
     key: "orderBy",
     parse: (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
@@ -112,25 +119,12 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
   const [salaryMax, setSalaryMax] = useState<number | undefined>(
     filtersFromUrl.salaryMax,
   );
+  const [status, setStatus] = useState<string | undefined>(
+    filtersFromUrl.status,
+  );
   const [orderBy, setOrderBy] = useState<string | undefined>(
     filtersFromUrl.orderBy,
   );
-
-  // Sincronizza stati locali quando cambiano i filtri dall'URL (es. back/forward, link esterno)
-  useEffect(() => {
-    if (filtersFromUrl.searchTerm !== undefined) {
-      setSearchTerm(filtersFromUrl.searchTerm);
-    }
-    if (filtersFromUrl.salaryMin !== undefined) {
-      setSalaryMin(filtersFromUrl.salaryMin);
-    }
-    if (filtersFromUrl.salaryMax !== undefined) {
-      setSalaryMax(filtersFromUrl.salaryMax);
-    }
-    if (filtersFromUrl.orderBy !== undefined) {
-      setOrderBy(filtersFromUrl.orderBy);
-    }
-  }, [filtersFromUrl]);
 
   // Costruisce la prismaQuery con i filtri applicati
   const prismaQuery = useMemo(() => {
@@ -138,10 +132,11 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
       searchTerm: searchTerm || undefined,
       salaryMin: salaryMin,
       salaryMax: salaryMax,
+      status: status,
       orderBy: orderBy,
     };
     return applyJobFilters(baseQuery, filters);
-  }, [baseQuery, searchTerm, salaryMin, salaryMax, orderBy]);
+  }, [baseQuery, searchTerm, salaryMin, salaryMax, status, orderBy]);
 
   // Handler per la ricerca
   const handleSearch = useCallback(
@@ -179,13 +174,27 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
     [setFiltersInUrl],
   );
 
+  // Handler per status change
+  const handleStatusChange = useCallback(
+    (value: string | undefined) => {
+      const newValue = value === "all" ? undefined : value;
+      setStatus(newValue);
+      setFiltersInUrl({ status: newValue });
+    },
+    [setFiltersInUrl],
+  );
+
   // Resetta tutti i filtri
+  const [resetKey, setResetKey] = useState(0);
+
   const resetFilters = useCallback(() => {
     setSearchTerm("");
     setSalaryMin(undefined);
     setSalaryMax(undefined);
+    setStatus(undefined);
     setOrderBy(undefined);
     setFiltersInUrl({});
+    setResetKey((prev) => prev + 1); // Increment reset key to force remount of filter components
   }, [setFiltersInUrl]);
 
   // Conta i filtri attivi
@@ -194,15 +203,17 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
     if (searchTerm) count++;
     if (salaryMin !== undefined) count++;
     if (salaryMax !== undefined) count++;
-    if (orderBy && orderBy !== "none") count++;
+    if (status) count++;
+    if (orderBy) count++;
     return count;
-  }, [searchTerm, salaryMin, salaryMax, orderBy]);
+  }, [searchTerm, salaryMin, salaryMax, status, orderBy]);
 
   return {
     // Valori dei filtri
     searchTerm,
     salaryMin,
     salaryMax,
+    status,
     orderBy,
     // Query Prisma con filtri applicati
     prismaQuery,
@@ -210,8 +221,11 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
     handleSearch,
     handleSalaryMinChange,
     handleSalaryMaxChange,
+    handleStatusChange,
     handleOrderByChange,
     resetFilters,
     activeFiltersCount,
+    // Key per forzare remount dei filtri al reset
+    resetKey,
   };
 }

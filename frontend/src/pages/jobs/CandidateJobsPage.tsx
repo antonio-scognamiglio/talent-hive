@@ -18,7 +18,7 @@ import {
   Spinner,
   Toolbar,
   RefreshButton,
-  PrimaryButton,
+  GhostButton,
 } from "@/features/shared/components";
 import {
   SearchInput,
@@ -64,6 +64,7 @@ export default function CandidateJobsPage() {
     handleOrderByChange,
     resetFilters,
     activeFiltersCount,
+    resetKey,
   } = useJobFilters({
     baseQuery: DEFAULT_PRISMA_QUERY,
   });
@@ -112,6 +113,7 @@ export default function CandidateJobsPage() {
         leftContent={
           <>
             <SearchInput
+              key={`search-${resetKey}`}
               placeholder="Cerca per titolo, descrizione o località..."
               value={searchTerm}
               onSearch={handleSearch}
@@ -119,6 +121,7 @@ export default function CandidateJobsPage() {
               className="flex-2 min-w-72 sm:min-w-96"
             />
             <NumberFilter
+              key={`salaryMin-${resetKey}`}
               value={salaryMin}
               onChange={handleSalaryMinChange}
               placeholder="Salario minimo"
@@ -127,6 +130,7 @@ export default function CandidateJobsPage() {
               className="flex-1 min-w-48 sm:min-w-60"
             />
             <NumberFilter
+              key={`salaryMax-${resetKey}`}
               value={salaryMax}
               onChange={handleSalaryMaxChange}
               placeholder="Salario massimo"
@@ -135,6 +139,7 @@ export default function CandidateJobsPage() {
               className="flex-1 min-w-48 sm:min-w-60"
             />
             <OrderByFilter
+              key={`orderBy-${resetKey}`}
               value={orderBy || "none"}
               onChange={handleOrderByChange}
               options={JOB_ORDER_BY_OPTIONS}
@@ -145,7 +150,7 @@ export default function CandidateJobsPage() {
         }
         rightContent={
           <>
-            <PrimaryButton
+            <GhostButton
               text="Azzera filtri"
               onClick={resetFilters}
               disabled={activeFiltersCount === 0}

@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 /**
  * useApplicationFilters Hook
  *
@@ -6,7 +5,7 @@
  * Incapsula: sincronizzazione filtri con URL, stati locali, prismaQuery con filtri, handler.
  */
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { PrismaQueryOptions } from "@/features/shared/types/prismaQuery.types";
 import type { Application } from "@shared/types";
 import {
@@ -95,18 +94,8 @@ export function useApplicationFilters({
     filtersFromUrl.orderBy,
   );
 
-  // Sincronizza stati locali quando cambiano i filtri dall'URL
-  useEffect(() => {
-    if (filtersFromUrl.searchTerm !== undefined) {
-      setSearchTerm(filtersFromUrl.searchTerm);
-    }
-    if (filtersFromUrl.statusFilter !== undefined) {
-      setStatusFilter(filtersFromUrl.statusFilter);
-    }
-    if (filtersFromUrl.orderBy !== undefined) {
-      setOrderBy(filtersFromUrl.orderBy);
-    }
-  }, [filtersFromUrl]);
+  // Key per forzare il remount dei componenti filtro al reset
+  const [resetKey, setResetKey] = useState(0);
 
   // Costruisce la prismaQuery con i filtri applicati
   const prismaQuery = useMemo(() => {
@@ -151,6 +140,7 @@ export function useApplicationFilters({
     setStatusFilter("all");
     setOrderBy(undefined);
     setFiltersInUrl({});
+    setResetKey((prev) => prev + 1);
   }, [setFiltersInUrl]);
 
   // Conta i filtri attivi (per mostrare il pulsante reset)
@@ -174,6 +164,7 @@ export function useApplicationFilters({
     handleStatusChange,
     handleOrderByChange,
     resetFilters,
+    resetKey,
     activeFiltersCount,
   };
 }
