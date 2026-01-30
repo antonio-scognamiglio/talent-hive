@@ -62,6 +62,7 @@ export default function CandidateApplicationsPage() {
     handleStatusChange,
     handleOrderByChange,
     resetFilters,
+    resetKey,
     activeFiltersCount,
   } = useApplicationFilters({ baseQuery: DEFAULT_PRISMA_QUERY });
 
@@ -115,6 +116,7 @@ export default function CandidateApplicationsPage() {
         leftContent={
           <>
             <SearchInput
+              key={`search-${resetKey}`}
               placeholder="Cerca per titolo job..."
               value={searchTerm}
               onSearch={handleSearch}
@@ -122,11 +124,13 @@ export default function CandidateApplicationsPage() {
               className="flex-2 min-w-72 sm:min-w-96"
             />
             <ApplicationStatusFilter
+              key={`status-${resetKey}`}
               value={statusFilter}
               onChange={handleStatusChange}
               className="flex-1 min-w-48 sm:min-w-60"
             />
             <OrderByFilter
+              key={`orderBy-${resetKey}`}
               value={orderBy || "none"}
               onChange={handleOrderByChange}
               options={APPLICATION_ORDER_BY_OPTIONS}
