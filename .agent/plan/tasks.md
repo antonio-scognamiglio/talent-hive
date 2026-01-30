@@ -12,14 +12,14 @@
 
 ## 📋 To-Do (Backlog)
 
-- [ ] **Feature: Candidate Applications List Page**
-  - [ ] Creare hook `useApplications` con paginazione e filtri
-  - [ ] Creare pagina `CandidateApplicationsPage` con route
-  - [ ] Creare componente `ApplicationCard` per lista
-  - [ ] Creare modale `ApplicationDetailModal` con dettagli candidatura
-  - [ ] Gestire navigazione job (nuova tab)
-
 ## ✅ Completate
+
+- [x] **Feature: Candidate Applications List Page**
+  - [x] Creare hook `useApplications` con paginazione e filtri
+  - [x] Creare pagina `CandidateApplicationsPage` con route
+  - [x] Creare componente `ApplicationCard` per lista
+  - [x] Creare modale `ApplicationDetailModal` con dettagli candidatura
+  - [x] Gestire navigazione job (nuova tab)
 
 - [x] **Refactoring: Centralized Error Handling**
   - Implementato sistema errori custom (`AppError`, `NotFoundError`, `ForbiddenError`, etc.)
