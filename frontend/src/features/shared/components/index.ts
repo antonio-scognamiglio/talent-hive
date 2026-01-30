@@ -18,3 +18,4 @@ export * from "./BackButton";
 export * from "./ConfirmationDialog";
 export * from "./ContentCard";
 export * from "./InputLoading";
+export * from "./GhostButton";

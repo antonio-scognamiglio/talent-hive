@@ -77,9 +77,15 @@ export function useUrlFilters<TFilters extends Record<string, unknown>>(
         (prev) => {
           const sp = new URLSearchParams(prev);
 
+          // Se next è vuoto, pulisci tutti i params dei filtri
+          const isResetAll = Object.keys(next).length === 0;
+
           for (const cfg of configs) {
-            // Se il nuovo valore è fornito in 'next', usalo.
-            if (Object.prototype.hasOwnProperty.call(next, cfg.key)) {
+            if (isResetAll) {
+              // Reset mode: rimuovi tutti i params dei filtri
+              sp.delete(cfg.param);
+            } else if (Object.prototype.hasOwnProperty.call(next, cfg.key)) {
+              // Se il nuovo valore è fornito in 'next', usalo.
               const newValue = next[cfg.key];
               const serialized = cfg.serialize(newValue);
 

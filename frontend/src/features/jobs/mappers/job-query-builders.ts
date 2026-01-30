@@ -91,3 +91,22 @@ export function getJobOrderByCleanedQuery(
 
   return result || baseQuery;
 }
+
+/**
+ * Applica il filtro status alla query (equals)
+ */
+export function getJobStatusFilterCleanedQuery(
+  query: PrismaQueryOptions<Job> | undefined,
+  status: string | undefined,
+): PrismaQueryOptions<Job> {
+  const baseQuery = query || {};
+
+  if (!status || status === "all") {
+    return baseQuery;
+  }
+
+  return (
+    cleanPrismaQuery(baseQuery, "status", status, "where", "equals") ||
+    baseQuery
+  );
+}

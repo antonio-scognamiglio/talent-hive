@@ -8,6 +8,7 @@ import { PAGE_SIZES } from "@/features/pagination/constants/page-sizes";
 import { handleError } from "@/features/shared/utils/error.utils";
 import { handleSuccess } from "@/features/shared/utils/success.utils";
 import { queryKeys } from "@/features/shared/config/query-client.config";
+import type { JobWithCount } from "../types/job.types";
 
 export interface UseJobsProps {
   isQueryEnabled?: boolean;
@@ -40,7 +41,7 @@ export const useJobs = ({
 }: UseJobsProps = {}) => {
   const queryClient = useQueryClient();
 
-  const getJobsPaginatedQuery = usePaginationForGen<Job>({
+  const getJobsPaginatedQuery = usePaginationForGen<JobWithCount>({
     pageSize,
     apiFunction: jobsService.listJobs,
     prismaQuery: defaultPrismaQuery,

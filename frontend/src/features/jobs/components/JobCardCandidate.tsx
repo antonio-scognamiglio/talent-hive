@@ -16,7 +16,7 @@ import {
 } from "@/features/shared/utils/date.utils";
 import {
   JOB_STATUS_LABELS,
-  getJobStatusBadgeClasses,
+  getJobStatusVariant,
 } from "@/features/jobs/utils/job-status.utils";
 import { formatSalaryRange } from "@/features/jobs/utils/salary-format.utils";
 
@@ -65,7 +65,7 @@ export function JobCardCandidate({ job, onView }: JobCardCandidateProps) {
               {/* Status Badge */}
               <Badge
                 variant="outline"
-                className={cn("text-xs", getJobStatusBadgeClasses(job.status))}
+                className={cn("text-xs", getJobStatusVariant(job.status))}
               >
                 {JOB_STATUS_LABELS[job.status]}
               </Badge>
