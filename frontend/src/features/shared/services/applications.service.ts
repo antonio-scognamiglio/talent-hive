@@ -1,13 +1,33 @@
-import type { Application } from "@shared/types";
+import type { Application, ListApplicationsDto } from "@shared/types";
+import type { PaginatedResponse } from "@/features/shared/types/pagination.types";
 import { apiClient } from "../api/client";
+import type { AxiosResponse } from "axios";
 
 /**
  * Applications API Service
  * Handles all application-related API calls for candidates
+ * Returns full AxiosResponse for compatibility with usePaginationForGen
  */
 export const applicationsService = {
   /**
-   * Get candidate's own applications
+   * List applications with filters and pagination
+   * POST /api/applications/list
+   *
+   * @param options - API options with body containing Prisma query
+   * @returns Full AxiosResponse with PaginatedResponse in .data
+   */
+  listApplications: async (options: {
+    body: ListApplicationsDto;
+    path?: Record<string, unknown>;
+  }): Promise<AxiosResponse<PaginatedResponse<Application>>> => {
+    return await apiClient.post<PaginatedResponse<Application>>(
+      "/applications/list",
+      options.body,
+    );
+  },
+
+  /**
+   * Get candidate's own applications (Legacy/Simple version)
    * GET /api/applications/my
    *
    * @returns List of user's applications with job details

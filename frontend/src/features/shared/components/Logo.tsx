@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
 
 /**
  * Logo Component
@@ -24,13 +25,22 @@ export interface LogoProps {
 
 export function Logo({
   size = 48,
-  variant = "dark",
+  variant,
   className,
   alt = "TalentHive",
 }: LogoProps) {
+  const { resolvedTheme } = useTheme();
+
+  // Se variant è esplicito usa quello, altrimenti usa il tema corrente
+  // dark theme -> dark variant (che carica Icon-Dark.png = icona bianca)
+  // light theme -> light variant (che carica Icon-Light.png = icona scura)
+  // Fallback a "light" se resolvedTheme è undefined (safe default)
+  const effectiveVariant =
+    variant ?? (resolvedTheme === "dark" ? "dark" : "light");
+
   return (
     <img
-      src={`/logo/TalentHive-Icon-${variant === "dark" ? "Dark" : "Light"}.png`}
+      src={`/logo/TalentHive-Icon-${effectiveVariant === "dark" ? "Dark" : "Light"}.png`}
       alt={alt}
       className={cn("object-contain", className)}
       style={{ height: `${size}px`, width: "auto" }}

@@ -14,9 +14,11 @@ import {
 } from "@/features/pagination/constants/page-sizes";
 import {
   EmptyState,
+  ErrorState,
   Spinner,
   Toolbar,
   RefreshButton,
+  PrimaryButton,
 } from "@/features/shared/components";
 import {
   SearchInput,
@@ -24,7 +26,7 @@ import {
   OrderByFilter,
 } from "@/features/shared/components/filters";
 import { PageContent, PageHeader } from "@/features/shared/components/layout";
-import { Briefcase } from "lucide-react";
+import { Briefcase, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { PrismaQueryOptions } from "@/features/shared/types/prismaQuery.types";
@@ -60,6 +62,8 @@ export default function CandidateJobsPage() {
     handleSalaryMinChange,
     handleSalaryMaxChange,
     handleOrderByChange,
+    resetFilters,
+    activeFiltersCount,
   } = useJobFilters({
     baseQuery: DEFAULT_PRISMA_QUERY,
   });
@@ -137,6 +141,16 @@ export default function CandidateJobsPage() {
               placeholder="Ordina per..."
               className="flex-1 min-w-48 sm:min-w-60"
             />
+          </>
+        }
+        rightContent={
+          <>
+            <PrimaryButton
+              text="Azzera filtri"
+              onClick={resetFilters}
+              disabled={activeFiltersCount === 0}
+              icon={<X className="h-4 w-4" />}
+            />
             <RefreshButton refetch={refetch} isLoading={isFetching} />
           </>
         }
@@ -168,7 +182,12 @@ export default function CandidateJobsPage() {
             : undefined
         }
       >
-        {({ data: paginatedJobs, isLoading: isLoadingData }) => (
+        {({
+          data: paginatedJobs,
+          isLoading: isLoadingData,
+          isError: hasError,
+          refetch: retryFetch,
+        }) => (
           <>
             {isLoadingData ? (
               <Spinner
@@ -176,6 +195,12 @@ export default function CandidateJobsPage() {
                 showMessage
                 message="Caricamento annunci..."
                 className="py-12"
+              />
+            ) : hasError ? (
+              <ErrorState
+                title="Errore di caricamento"
+                description="Non è stato possibile caricare gli annunci. Riprova più tardi."
+                onRetry={() => retryFetch?.()}
               />
             ) : paginatedJobs.length === 0 ? (
               <EmptyState

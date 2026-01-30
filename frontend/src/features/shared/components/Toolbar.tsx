@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 
 interface ToolbarProps {
   /** Contenuto a sinistra: filtri, search, controlli navigazione, o custom */
-  leftContent: ReactNode;
+  leftContent?: ReactNode;
   /** Contenuto a destra: pulsanti, refresh button, o custom (opzionale) */
   rightContent?: ReactNode;
   /** Variante del toolbar: "card" con wrapper styled, "plain" senza wrapper */

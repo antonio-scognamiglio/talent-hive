@@ -48,6 +48,8 @@ Questo progetto usa un framework di coordinamento. **Consulta sempre questi file
 | `.agent/plan/tasks.md`             | Task in corso e backlog               |
 | `.agent/directives/`               | Regole tecniche (vedi workflow sotto) |
 
+> **NOTA IMPORTANTE**: Non creare MAI la cartella `.agent/brain` nel repository. Gli artefatti di pensiero (piani, walkthrough) vivono nella memoria dell'agente o vengono promossi a documentazione ufficiale in `.agent/docs` o `docs/`.
+
 **Workflow:**
 
 1. **Inizio**: Leggi `active_context.md` e `tasks.md`

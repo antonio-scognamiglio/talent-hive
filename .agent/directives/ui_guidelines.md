@@ -1,6 +1,14 @@
 # 🎨 UI & Design Guidelines
 
 > **Obiettivo**: Mantenere l'interfaccia di TalentHive coerente, professionale ("Trustworthy") e perfettamente funzionante sia in Light che in Dark mode.
+>
+> **🛑 HARD RULE: NO INLINE STYLES**
+> L'uso dell'attributo `style={{ ... }}` è **VIETATO**.
+>
+> - Per stili statici: Usa classi Tailwind.
+> - Per stili dinamici: Usa `cn()` con classi condizionali o variabili CSS.
+> - Per colori: Usa ESCLUSIVAMENTE classi semantic (`bg-primary`, `text-destructive`) o utility functions che restituiscono classi (es. `getStatusColor`). **MAI** codici HEX inline.
+> - **NO FRAGILE STYLE DERIVATION**: Non usare mai metodi sporchi come `.replace()`, `.split()`, o regex su stringhe di classi per derivare altri stili (es. trasformare `bg-blue-500` in `border-blue-500`). Crea SEMPRE una utility function dedicata che mappa lo stato esplicitamente (es. `getStatusBorderColor(status)`).
 
 ---
 

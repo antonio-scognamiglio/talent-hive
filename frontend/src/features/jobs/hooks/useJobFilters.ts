@@ -179,6 +179,25 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
     [setFiltersInUrl],
   );
 
+  // Resetta tutti i filtri
+  const resetFilters = useCallback(() => {
+    setSearchTerm("");
+    setSalaryMin(undefined);
+    setSalaryMax(undefined);
+    setOrderBy(undefined);
+    setFiltersInUrl({});
+  }, [setFiltersInUrl]);
+
+  // Conta i filtri attivi
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (searchTerm) count++;
+    if (salaryMin !== undefined) count++;
+    if (salaryMax !== undefined) count++;
+    if (orderBy && orderBy !== "none") count++;
+    return count;
+  }, [searchTerm, salaryMin, salaryMax, orderBy]);
+
   return {
     // Valori dei filtri
     searchTerm,
@@ -192,5 +211,7 @@ export function useJobFilters({ baseQuery }: UseJobFiltersProps) {
     handleSalaryMinChange,
     handleSalaryMaxChange,
     handleOrderByChange,
+    resetFilters,
+    activeFiltersCount,
   };
 }

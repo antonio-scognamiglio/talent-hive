@@ -25,14 +25,106 @@ Ogni feature in `src/features/{feature-name}/` con:
 ├── components/
 │   ├── dialogs/        # XxxDialog.tsx
 │   ├── forms/          # XxxForm.tsx (standalone)
-│   └── fields/         # Feature-specific fields
+│   ├── fields/         # Feature-specific fields
+│   └── filters/        # Feature-specific filters (es. ApplicationStatusFilter)
 ├── hooks/              # useXxx.ts
+├── mappers/            # Query builders (usano prisma-query-utils)
 ├── schemas/            # {entity}-schema.ts (Zod only, NO components)
 ├── services/           # (optional, if not in shared)
 ├── types/              # UI-only types
 ├── utils/
-├── mappers/
 └── index.ts            # Barrel export
+```
+
+---
+
+## Filter Components
+
+### Organizzazione
+
+- **Filtri comuni** (SearchInput, OrderByFilter, NumberFilter): `shared/components/filters/`
+- **Filtri feature-specific** (ApplicationStatusFilter, JobTypeFilter): `{feature}/components/filters/`
+
+### Pattern Styling
+
+- **Componente interno**: Usare sempre `w-full` come default nel SelectTrigger/Input
+- **Componente esterno (nel Toolbar)**: Usare `flex-X min-w-XX` per responsiveness
+- **MAI** larghezze fisse (w-44, w-48) - i filtri devono adattarsi allo spazio disponibile
+
+```tsx
+// ✅ Nel componente filtro (OrderByFilter, StatusFilter, etc.)
+<SelectTrigger className={cn("w-full", className)}>
+
+// ✅ Nel Toolbar - flex per distribuzione + min-w per leggibilità minima
+<Toolbar
+  leftContent={
+    <>
+      <SearchInput className="flex-2 min-w-72 sm:min-w-96" ... />
+      <StatusFilter className="flex-1 min-w-48 sm:min-w-60" ... />
+      <OrderByFilter className="flex-1 min-w-48 sm:min-w-60" ... />
+    </>
+  }
+  rightContent={
+    <>
+      {/* Reset Button adiacente al Refresh - sempre visibile, disabilitato se non serve */}
+      <PrimaryButton
+        text="Azzera filtri"
+        onClick={resetFilters}
+        disabled={activeFiltersCount === 0}
+        icon={<X className="h-4 w-4" />}
+      />
+      <RefreshButton refetch={refetch} isLoading={isFetching} />
+    </>
+  }
+/>
+
+### Reset Filters
+Quando sono presenti filtri, DEVE essere presente un pulsante di reset:
+1.  **Placement**: `rightContent` del Toolbar, subito prima del `RefreshButton`.
+2.  **Component**: `PrimaryButton` (stile default primary).
+3.  **Stato**: Sempre visibile, `disabled` se `activeFiltersCount === 0`.
+4.  **Hook**: Il custom hook dei filtri (`useXxxFilters`) deve esporre `resetFilters` e `activeFiltersCount`.
+```
+
+**Perché flex + min-w?**
+
+- `flex-X` → distribuisce lo spazio proporzionalmente tra i filtri
+- `min-w-XX` → garantisce larghezza minima per leggibilità
+- `sm:min-w-XX` → breakpoint per schermi più grandi
+
+### Filter Mappers (prisma-query-utils)
+
+Per costruire le query Prisma nei mapper, **USARE SEMPRE** le utilities da `@/features/shared/utils/prisma-query-utils`:
+
+| Utility                    | Uso                                       |
+| -------------------------- | ----------------------------------------- |
+| `updateSearchConditions`   | Ricerca testuale (supporta nested keys)   |
+| `cleanPrismaQuery`         | Aggiorna filtri where/orderBy             |
+| `cleanEmptyNestedObjects`  | Pulisce oggetti vuoti dalla query         |
+| `createSearchORConditions` | Crea condizioni OR per multi-field search |
+
+```tsx
+// Esempio mapper
+import {
+  updateSearchConditions,
+  cleanPrismaQuery,
+} from "@/features/shared/utils/prisma-query-utils";
+
+export function applyFeatureFilters(baseQuery, filters) {
+  let result = { ...baseQuery };
+
+  // Ricerca su campo nested
+  if (filters.searchTerm) {
+    result = updateSearchConditions(result, ["job.title"], filters.searchTerm);
+  }
+
+  // Filtro where semplice
+  if (filters.status) {
+    result = cleanPrismaQuery(result, "status", filters.status, "where");
+  }
+
+  return cleanEmptyNestedObjects(result);
+}
 ```
 
 **CRITICAL DECISION RULE**: Components belong to the feature that **OWNS THE DATA**, not where they're used.
@@ -58,6 +150,44 @@ import { PageContent, PageHeader } from "@/features/shared/components/layout";
 </PageContent>
 ```
 
+### RefreshButton Placement
+
+Il `RefreshButton` va sempre in UNO di questi posti (mai entrambi, mai nel PageHeader):
+
+| Scenario                    | Dove va RefreshButton        |
+| --------------------------- | ---------------------------- |
+| C'è Toolbar (filtri)        | In rightContent (con azioni) |
+| No Toolbar, c'è CustomTable | Nel ContentCard header       |
+
+```tsx
+// ✅ Con Toolbar (filtri presenti):
+// leftContent = filtri, rightContent = azioni (+ RefreshButton)
+<Toolbar
+  variant="plain"
+  leftContent={
+    <>
+      <SearchInput ... />
+      <StatusFilter ... />
+    </>
+  }
+  rightContent={
+    <>
+      <PrimaryButton text="Crea" ... />
+      <RefreshButton refetch={refetch} isLoading={isFetching} />
+    </>
+  }
+/>
+
+// ✅ Senza Toolbar (tabella senza filtri)
+<ContentCard
+  refreshButton={{ refetch, isLoading: isFetching }}
+>
+  <CustomTable ... />
+</ContentCard>
+```
+
+**Regola**: Lo stato di loading per RefreshButton è `isFetching`, NON `isLoading`.
+
 ### Pagine Dettaglio (es. CandidateJobDetailPage)
 
 ```tsx
@@ -74,6 +204,104 @@ import { DetailPageHeader } from "@/features/shared/components/layout";
   {/* Contenuto dettaglio */}
 </PageContent>;
 ```
+
+---
+
+## State Components (Liste)
+
+Per le pagine lista, usare i componenti di stato corretti nel children render di `PaginationWrapper`:
+
+| Componente   | Uso                              |
+| ------------ | -------------------------------- |
+| `Spinner`    | Stato di caricamento (isLoading) |
+| `ErrorState` | Errore di caricamento (isError)  |
+| `EmptyState` | Lista vuota (data.length === 0)  |
+
+**Ordine condizioni (OBBLIGATORIO):**
+
+```tsx
+{({ data, isLoading, isError, refetch }) => (
+  <>
+    {isLoading ? (
+      <Spinner message="Caricamento..." />
+    ) : isError ? (
+      <ErrorState
+        title="Errore di caricamento"
+        description="Non è stato possibile caricare i dati."
+        onRetry={() => refetch?.()}
+      />
+    ) : data.length === 0 ? (
+      <EmptyState
+        icon={<Icon />}
+        title="Nessun elemento"
+        description="Descrizione..."
+      />
+    ) : (
+      // Render lista
+    )}
+  </>
+)}
+```
+
+**Regola**: MAI mostrare `EmptyState` se `isError` è true. È fuorviante mostrare "nessun elemento" quando il caricamento è fallito.
+
+---
+
+## Performance Optimization (useCallback / useMemo)
+
+Usare `useCallback` e `useMemo` per evitare ri-creazione di funzioni e variabili ad ogni render:
+
+### useCallback - Quando usarlo
+
+```tsx
+// ✅ Handler passati a componenti child con memo o in dependency array
+const handleClick = useCallback(
+  (id: string) => {
+    doSomething(id);
+  },
+  [doSomething],
+);
+
+// ✅ Funzioni passate come prop a CustomDialog, Card, TableRow, etc.
+const handleApplicationClick = useCallback(
+  (application: Application) => {
+    applicationDialog.openDialog(application, "view");
+  },
+  [applicationDialog],
+);
+
+// ❌ NON serve per handler inline semplici che non vengono passati
+<button onClick={() => setOpen(true)}>Open</button>;
+```
+
+### useMemo - Quando usarlo
+
+```tsx
+// ✅ Calcoli costosi o derivazioni da props/state
+const filteredItems = useMemo(
+  () => items.filter((item) => item.active),
+  [items],
+);
+
+// ✅ Oggetti passati come dependency o a componenti memoizzati
+const prismaQuery = useMemo<PrismaQueryOptions>(
+  () => ({
+    where: { status: "active" },
+  }),
+  [],
+);
+
+// ✅ Configurazione colonne tabella
+const columns = useMemo(
+  () => createColumnsConfig({ language, onEdit }),
+  [language, onEdit],
+);
+
+// ❌ NON serve per primitive o calcoli semplici
+const isActive = status === "active"; // NO useMemo needed
+```
+
+**Regola**: Quando in dubbio, chiediti: "Questa funzione/variabile viene passata a child components o usata come dependency?". Se sì → usa useCallback/useMemo.
 
 ---
 
@@ -620,6 +848,104 @@ export const entityService = {
 
 ---
 
+## UI Utilities Pattern
+
+**REGOLA CRITICA**: NON scrivere mai logica di UI helpers (colori, label, icone, etc.) inline nei componenti.
+Questa logica DEVE sempre vivere in utility functions dedicate in `{feature}/utils/`.
+
+### Quando Creare UI Utilities
+
+Crea utilities quando hai logica che mappa **dati → UI**:
+
+- Colori per badge/stati (`getStatusColor`)
+- Label testuali (`getStatusLabel`)
+- Icone condizionali (`getStatusIcon`)
+- Classi CSS condizionali (`getRowClassName`)
+
+### Pattern Standard
+
+```tsx
+// ❌ SBAGLIATO: Logica inline nel componente
+function ApplicationBadge({ status }) {
+  let color = "";
+  if (status === "NEW") color = "bg-blue-100 text-blue-700...";
+  if (status === "HIRED") color = "bg-green-100 text-green-700...";
+  // ...
+
+  return <Badge className={color}>{status}</Badge>;
+}
+
+// ✅ CORRETTO: Utility separata
+// @/features/applications/utils/status.utils.ts
+export const getApplicationStatusColor = (status: string): string => {
+  switch (status) {
+    case "NEW":
+      return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30...";
+    case "HIRED":
+      return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/50...";
+    default:
+      return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800...";
+  }
+};
+
+export const getApplicationStatusLabel = (status: string): string => {
+  switch (status) {
+    case "NEW":
+      return "Inviata";
+    case "HIRED":
+      return "Assunto";
+    default:
+      return "Sconosciuto";
+  }
+};
+
+// Nel componente
+function ApplicationBadge({ status }) {
+  return (
+    <Badge className={getApplicationStatusColor(status)}>
+      {getApplicationStatusLabel(status)}
+    </Badge>
+  );
+}
+```
+
+### Organizzazione File
+
+```
+{feature}/utils/
+├── status.utils.ts       # Status-related helpers (getStatusColor, getStatusLabel)
+├── formatting.utils.ts   # Formatters (formatSalary, formatDate)
+└── validation.utils.ts   # UI-specific validations
+```
+
+### Esempio Reale: Application Status
+
+Vedi [`@/features/applications/utils/status.utils.ts`](file:///Users/tonyscogna/development/learning/practice/web/talent-hive/frontend/src/features/applications/utils/status.utils.ts) come riferimento:
+
+**Per Recruiters** (vedono workflow completo):
+
+```tsx
+getApplicationStatusColor(workflowStatus); // NEW → blue, SCREENING → amber, etc.
+getApplicationStatusLabel(workflowStatus); // NEW → "Inviata", etc.
+```
+
+**Per Candidates** (vedono solo decisione finale):
+
+```tsx
+getCandidateDisplayStatus(finalDecision); // null → "In valutazione", HIRED → "Assunto"
+getCandidateStatusColor(finalDecision); // null → blue, HIRED → green, REJECTED → red
+```
+
+### Regole
+
+1. **Naming**: Usa prefissi semantici (`get`, `is`, `has`, `format`)
+2. **Collocazione**: Feature-specific in `{feature}/utils/`, shared in `@/features/shared/utils/`
+3. **Dark mode**: SEMPRE includere varianti dark (vedi esempio sopra)
+4. **Type safety**: Tipizza input/output dove possibile
+5. **Default case**: SEMPRE gestire il fallback con `default` in switch
+
+---
+
 ## Shared Components
 
 Controllare SEMPRE `@/features/shared/components/` prima di creare:
@@ -699,6 +1025,126 @@ onSuccess: () => {
   queryClient.invalidateQueries({ queryKey: queryKeys.applications.my });
 };
 ```
+
+---
+
+---
+
+## Utilities & Standards
+
+Segui sempre queste regole per mantenere coerenza nel codice e nella UI.
+
+### 1. Date Formatting
+
+**MAI formattare date a mano** o usare `date.toLocaleDateString()`.
+Usa SEMPRE le utility centralizzate in `@/features/shared/utils/date.utils.ts` che sfruttano `date-fns` e la locale corretta.
+
+| Funzione                      | Scopo                                       | Esempio           |
+| ----------------------------- | ------------------------------------------- | ----------------- |
+| `formatDate(date)`            | Format standard localizzato (PPP)           | "24 gennaio 2024" |
+| `getRelativeTimeString(date)` | Tempo relativo                              | "2 giorni fa"     |
+| `formatDateForInput(date)`    | Per value di input date                     | "2024-01-24"      |
+| `normalizeDate(date)`         | Helper interno per gestire string/Date/null | -                 |
+
+```tsx
+import { formatDate } from "@/features/shared/utils/date.utils";
+
+// ✅ CORRETTO
+<span>{formatDate(user.createdAt)}</span>
+
+// ❌ SBAGLIATO
+<span>{new Date(user.createdAt).toLocaleDateString()}</span>
+```
+
+### 2. Pagination Constants
+
+Per le dimensioni della paginazione, usa SEMPRE le costanti da `@/features/pagination/constants/page-sizes.ts`.
+Non hardcodare mai numeri come `10` o `25`.
+
+```tsx
+import { PAGE_SIZES } from "@/features/pagination";
+
+// ✅ CORRETTO
+const pageSize = PAGE_SIZES.DEFAULT_PAGE_SIZE; // 25
+
+// ❌ SBAGLIATO
+const pageSize = 10;
+```
+
+### 3. Standard Buttons
+
+Usa SEMPRE i wrapper stilizzati invece di `<Button>` raw per azioni principali/secondarie standard.
+
+| Componente        | Uso                                            |
+| ----------------- | ---------------------------------------------- |
+| `PrimaryButton`   | Azione principale (Salva, Crea, Conferma)      |
+| `SecondaryButton` | Azione secondaria/Annulla (Chiudi, Indietro)   |
+| `GhostButton`     | Azione terziaria/Link (Dettagli, Info, Inline) |
+
+```tsx
+// ✅ CORRETTO
+<PrimaryButton onClick={handleSave} text="Salva" />
+<SecondaryButton onClick={onClose} text="Annulla" />
+<GhostButton onClick={onDetails} text="Dettagli" icon={<Eye />} />
+```
+
+---
+
+## API Services
+
+I services in `@/features/shared/services/` seguono pattern specifici per compatibilità con i generici hooks.
+
+### List Services (per usePaginationForGen)
+
+I metodi `listXxx` DEVONO seguire questo pattern:
+
+```typescript
+// ✅ CORRETTO - Restituisce AxiosResponse, accetta { body, path }
+listApplications: async (options: {
+  body: ListApplicationsDto;
+  path?: Record<string, unknown>;
+}): Promise<AxiosResponse<PaginatedResponse<Application>>> => {
+  return await apiClient.post<PaginatedResponse<Application>>(
+    "/applications/list",
+    options.body,
+  );
+},
+```
+
+```typescript
+// ❌ SBAGLIATO - Restituisce .data unwrapped
+listApplications: async (query: ListDto): Promise<PaginatedResponse<T>> => {
+  const response = await apiClient.post(...);
+  return response.data; // MAI fare questo per le list!
+},
+```
+
+**Regola**: MAI usare `.data` nei metodi list. `usePaginationForGen` si aspetta `AxiosResponse`.
+
+**Riferimento**: Seguire pattern di `jobs.service.ts`.
+
+### Error Handling (per usePaginationForGen)
+
+Tutti gli hooks che usano `usePaginationForGen` DEVONO passare `onError` con `handleError`:
+
+```typescript
+// ✅ CORRETTO - L'utente vede toast su errore
+const query = usePaginationForGen<Entity>({
+  // ...altre props
+  onError: (error) =>
+    handleError(error, "Errore durante il caricamento di {entity}"),
+});
+```
+
+```typescript
+// ❌ SBAGLIATO - Errore silenzioso, l'utente non sa cosa è successo
+const query = usePaginationForGen<Entity>({
+  // ...altre props
+  // onError mancante!
+});
+```
+
+**Regola**: MAI omettere `onError` nei list hooks. L'utente deve sempre sapere quando un caricamento fallisce.
 
 ---
 
