@@ -1,7 +1,6 @@
 import { Calendar, MapPin, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { GhostButton } from "@/features/shared/components/GhostButton";
 import type { Application } from "@shared/types";
 import { formatDate } from "@/features/shared/utils/date.utils";
