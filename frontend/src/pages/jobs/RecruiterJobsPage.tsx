@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { X, Briefcase } from "lucide-react";
 
 import {
@@ -23,9 +23,10 @@ import { PageHeader, PageContent } from "@/features/shared/components/layout";
 import { Toolbar } from "@/features/shared/components/Toolbar";
 import { ContentCard } from "@/features/shared/components/ContentCard";
 import type { JobWithCount } from "@/features/jobs/types/job.types";
-import type { Job } from "@shared/types";
+import type { Job, UpdateJobDto } from "@shared/types";
 import { createJobColumnsConfig } from "@/features/jobs/utils/job-columns.utils";
 import ConfirmationDialog from "@/features/shared/components/ConfirmationDialog";
+import { JobDetailDialog } from "@/features/jobs/components/dialogs/JobDetailDialog";
 import { useStateDialog } from "@/features/shared/hooks/useStateDialog";
 import {
   PAGE_SIZES,
@@ -45,8 +46,7 @@ const BASE_QUERY: PrismaQueryOptions<Job> = {
 };
 
 const RecruiterJobsPage = () => {
-  const navigate = useNavigate();
-  const dialog = useStateDialog<JobWithCount>(["delete"]);
+  const dialog = useStateDialog<JobWithCount>(["delete", "detail"]);
 
   const [pageSize, setPageSize] = useState<PageSize>(
     PAGE_SIZES.DEFAULT_PAGE_SIZE,
@@ -73,10 +73,11 @@ const RecruiterJobsPage = () => {
     resetKey,
   } = useJobFilters({ baseQuery: BASE_QUERY });
 
-  const { getJobsPaginatedQuery, deleteJobMutation } = useJobs({
-    defaultPrismaQuery: prismaQuery,
-    pageSize,
-  });
+  const { getJobsPaginatedQuery, updateJobMutation, deleteJobMutation } =
+    useJobs({
+      defaultPrismaQuery: prismaQuery,
+      pageSize,
+    });
 
   const {
     data,
@@ -93,13 +94,15 @@ const RecruiterJobsPage = () => {
     refetch,
   } = getJobsPaginatedQuery;
 
-  const handleEdit = useCallback(
+  // Handler per click sulla riga → Apre dialog dettaglio
+  const handleRowClick = useCallback(
     (job: JobWithCount) => {
-      navigate(`/jobs/${job.id}/edit`);
+      dialog.openDialog(job, "detail");
     },
-    [navigate],
+    [dialog],
   );
 
+  // Handler per delete (sia da tabella che da dialog)
   const handleDeleteClick = useCallback(
     (job: JobWithCount) => {
       dialog.openDialog(job, "delete");
@@ -114,16 +117,30 @@ const RecruiterJobsPage = () => {
     }
   };
 
-  // Configurazione Colonne tramite Factory
+  // Handler per update dal dialog (riceve già il DTO dal form)
+  // Usa refreshDialogData per aggiornare i dati nel dialog con la response
+  const handleUpdateJob = useCallback(
+    async (id: string, data: UpdateJobDto) => {
+      const response = await updateJobMutation.mutateAsync({ id, data });
+      // Aggiorna i dati nel dialog con il job aggiornato
+      // Preserva il _count dal selectedItem originale (non è nella response)
+      if (dialog.selectedItem) {
+        dialog.refreshDialogData({
+          ...response.data,
+          _count: dialog.selectedItem._count,
+        });
+      }
+    },
+    [updateJobMutation, dialog],
+  );
+
+  // Configurazione Colonne - solo onDelete, view/edit via onRowClick
   const columns = useMemo(
     () =>
       createJobColumnsConfig({
-        onView: (job) => navigate(`/jobs/${job.id}`),
-        onEdit: (job) => handleEdit(job),
         onDelete: (job) => handleDeleteClick(job),
       }),
-
-    [navigate, handleEdit, handleDeleteClick],
+    [handleDeleteClick],
   );
 
   return (
@@ -230,6 +247,7 @@ const RecruiterJobsPage = () => {
               <CustomTableStyled<JobWithCount>
                 {...props}
                 columns={columns}
+                onRowClick={handleRowClick}
                 emptyState={customEmptyState}
               />
             );
@@ -237,6 +255,19 @@ const RecruiterJobsPage = () => {
         </PaginationWrapperStyled>
       </ContentCard>
 
+      {/* Dialog Dettaglio Job (View/Edit) */}
+      {dialog.isDialogOpen("detail") && dialog.selectedItem && (
+        <JobDetailDialog
+          isOpen={true}
+          onClose={dialog.closeDialog}
+          job={dialog.selectedItem}
+          onUpdate={handleUpdateJob}
+          onDelete={handleDeleteClick}
+          isUpdating={updateJobMutation.isPending}
+        />
+      )}
+
+      {/* Dialog Conferma Eliminazione */}
       {dialog.isDialogOpen("delete") && dialog.selectedItem && (
         <ConfirmationDialog
           isOpen={true}

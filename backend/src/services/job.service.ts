@@ -1,5 +1,5 @@
 import { prisma } from "../libs/prisma";
-import type { Job, JobStatus, Prisma } from "@prisma/client";
+import type { Job, Prisma } from "@prisma/client";
 import type {
   CreateJobDto,
   UpdateJobDto,
@@ -9,15 +9,18 @@ import type {
 import type { PaginatedResponse } from "../types/pagination.types";
 import { sanitizePrismaQuery } from "../utils/sanitize-prisma-query.util";
 import {
-  addORConstraints,
   setQueryDefaults,
+  addWhereConstraints,
 } from "../utils/prisma-query.utils";
 import { NotFoundError, ForbiddenError } from "../errors/app.error";
 
 class JobService {
   /**
    * Get jobs list with pagination and filters
-   * RBAC: CANDIDATE sees only PUBLISHED, RECRUITER/ADMIN see all
+   * RBAC:
+   * - CANDIDATE: sees only PUBLISHED jobs (marketplace)
+   * - RECRUITER: sees only own jobs ("I Miei Annunci")
+   * - ADMIN: sees all jobs
    */
   async getJobs(
     incomingQuery: ListJobsDto,
@@ -29,19 +32,17 @@ class JobService {
       maxTake: 100,
     });
 
-    const where = safeQuery.where || {};
-
-    // RBAC: Override where clause based on role
+    // RBAC: Apply role-based constraints using utility
     if (user.role === "CANDIDATE") {
-      // CANDIDATE: Force PUBLISHED status
-      safeQuery.where = { ...where, status: "PUBLISHED" };
+      // CANDIDATE: Force PUBLISHED status (marketplace view)
+      safeQuery.where = addWhereConstraints(safeQuery.where, {
+        status: "PUBLISHED",
+      });
     } else if (user.role === "RECRUITER") {
-      // RECRUITER: PUBLISHED jobs OR own jobs
-      // Use utility to intelligently combine with existing filters
-      safeQuery.where = addORConstraints(where, [
-        { status: "PUBLISHED" },
-        { createdById: user.id },
-      ]);
+      // RECRUITER: Only their own jobs
+      safeQuery.where = addWhereConstraints(safeQuery.where, {
+        createdById: user.id,
+      });
     }
     // ADMIN: No restrictions
 

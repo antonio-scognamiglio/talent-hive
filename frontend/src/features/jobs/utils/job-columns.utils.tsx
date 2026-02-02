@@ -8,22 +8,26 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Eye, Pencil, Trash } from "lucide-react";
+import { Trash } from "lucide-react";
 import { formatDate } from "@/features/shared/utils/date.utils";
 import { getJobStatusVariant, getJobStatusLabel } from "./job-status.utils";
 
 interface CreateJobColumnsConfigOptions {
-  onView?: (job: JobWithCount) => void;
-  onEdit?: (job: JobWithCount) => void;
+  /**
+   * Callback per eliminare un job. Se non fornito, il bottone delete non viene mostrato.
+   * View e Edit sono gestiti tramite onRowClick → JobDetailDialog.
+   */
   onDelete?: (job: JobWithCount) => void;
 }
 
 /**
  * Factory function per creare la configurazione delle colonne della tabella Jobs.
+ *
+ * Pattern: "Inline Edit Modal"
+ * - Click sulla riga → Apre JobDetailDialog (view/edit)
+ * - Bottone Trash → Quick action per eliminare
  */
 export function createJobColumnsConfig({
-  onView,
-  onEdit,
   onDelete,
 }: CreateJobColumnsConfigOptions): ColumnConfig<JobWithCount>[] {
   // Helper per il badge status
@@ -83,8 +87,8 @@ export function createJobColumnsConfig({
     },
   ];
 
-  // Aggiungi azioni se i callback sono forniti
-  if (onView || onEdit || onDelete) {
+  // Aggiungi colonna azioni solo se onDelete è fornito
+  if (onDelete) {
     columns.push({
       key: "actions",
       header: "",
@@ -92,65 +96,26 @@ export function createJobColumnsConfig({
       align: "right",
       cell: (job) => (
         <div className="flex items-center justify-end gap-1">
-          {onView && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950"
-                    onClick={() => onView(job)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Vedi dettagli</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-
-          {onEdit && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950"
-                    onClick={() => onEdit(job)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Modifica</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-
-          {onDelete && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950"
-                    onClick={() => onDelete(job)}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Elimina</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Previene l'apertura del dialog
+                    onDelete(job);
+                  }}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Elimina</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       ),
     });
