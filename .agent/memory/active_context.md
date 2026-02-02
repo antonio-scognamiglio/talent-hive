@@ -11,25 +11,37 @@
 
 ## Ultima Sessione
 
-**Data**: 2026-01-30
+**Data**: 2026-02-02
 **Cosa fatto**:
 
-- ✅ **Recruiter Jobs Page**:
-  - Implementata tabella con `CustomTableStyled` e `PaginationWrapperStyled`
-  - Aggiunto conteggio candidature (`_count.applications`) via Prisma include
-  - Creato tipo `JobWithCount` in `frontend/src/features/jobs/types/job.types.ts`
-  - Aggiornati tutti i tipi correlati (dialog, handlers, columns) per type-safety
-  - Build completo verificato ✓
-- ✅ **Fix Reset Filters**:
-  - Risolto bug "Reset filtri" su `RecruiterJobsPage` e `CandidateJobsPage`
-  - Implementato pattern "Key-Based Reset" (passando `key={resetKey}` ai filtri)
-  - Rimosso `useEffect` sync state (anti-pattern che causava race conditions)
-  - Aggiornate direttive `frontend.md` con sezione "React Anti-Patterns & Best Practices"
+- ✅ **Job Detail Dialog (Recruiter)** - COMPLETATO:
+  - Creato `JobDetailDialog` in `frontend/src/features/jobs/components/dialogs/`
+  - Implementato pattern "Inline Edit Modal" con due stati (view/edit)
+  - **Stato**: ✅ COMPLETATO
+  - **Risultato**: `RecruiterJobsPage` completa, `JobDetailDialog` (View/Edit) funzionale, typings robusti.
+  - **Prossimo Step**: Avviare "Feature: Recruiter Applications Management Page" (Kanban/Tabella Candidature)
+  - RBAC: Solo owner o admin possono modificare/eliminare
+  - Integrato in `RecruiterJobsPage` con `onRowClick` handler
+  - Rimossi bottoni Eye/Pencil dalla tabella (solo Trash come quick action)
+  - Aggiunto pulsante "Vai alle Candidature" che naviga a `/applications?jobId=xxx`
 
-- ✅ **UX Discussion**: Definito pattern per Job Detail Dialog
-  - Pattern "Inline Edit Modal" (consolidato: Notion, Airtable, Trello)
-  - Click row → View Dialog → Edit mode (con pulsante Modifica)
-  - Trash rimane come quick action sulla tabella
+- ✅ **Automazione Dev Environment**:
+  - Aggiunto script `bun run dev` nel root `package.json`
+  - Lancia Docker, Backend e Frontend in parallelo con `concurrently`
+
+- ✅ **Brainstorming Gestione Candidature**:
+  - Deciso: Vista tabella paginata (no Kanban per MVP)
+  - Contatori status separati (query `/api/applications/stats`)
+  - Filtro job via `SearchableSelectPaginated`
+  - Filtro job via `SearchableSelectPaginated`
+  - Task aggiunta al backlog
+
+- ✅ **Fix: UpdateJobForm Type Safety**:
+  - Adottato pattern "Native Number": Schema usa `z.union([number, ""])`, form usa numeri grezzi
+  - Validazione robusta su campi vuoti (impedisce salvataggio `undefined`)
+  - `NumberInputField` gestisce la normalizzazione input -> number
+  - UX nativa (step, min/max) preservata
+  - eliminato codice di conversione superfluo (cast string/number)
 
 ## Task In Corso
 
@@ -37,14 +49,11 @@ _Nessuna task in corso_
 
 ## Prossimo Task da Iniziare
 
-_Nessun task pianificato_
-
-**Task Posticipati**:
-
-- **Feature: Job Detail Dialog (Recruiter)**: (Rimandato per prossima sessione)
+**Feature: Recruiter Applications Management Page** (nel backlog)
 
 ## Note Importanti
 
 - Il tipo `JobWithCount` è in `frontend/src/features/jobs/types/job.types.ts`
 - Backend supporta `_count` in include via `sanitizePrismaQuery`
-- Il conteggio candidature è già visibile nella tabella RecruiterJobsPage
+- `JobDetailDialog` usa `useAuthContext` per verificare RBAC
+- Pattern usati: `CustomDialog`, `useStateDialog`, `createJobColumnsConfig`

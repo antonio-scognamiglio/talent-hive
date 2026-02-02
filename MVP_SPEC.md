@@ -23,7 +23,8 @@
 
 - **One company** uses the entire platform
 - Multiple offices/locations (stored as string in Job.location)
-- All recruiters see all jobs (read access), but can only modify their own
+- Recruiters see only their own jobs ("I Miei Annunci")
+- ADMIN has full visibility on all jobs
 - No Organization or Department models (KISS principle)
 
 ### Authentication Model
@@ -74,20 +75,20 @@ CANDIDATE → Job applicant
 
 **Purpose**: Create job postings and manage candidate pipeline
 
-| Resource     | Create | Read   | Update          | Delete  |
-| ------------ | ------ | ------ | --------------- | ------- |
-| User         | ❌     | ❌     | ❌              | ❌      |
-| Job (Own)    | ✅     | ✅     | ✅              | ✅ Soft |
-| Job (Others) | ❌     | ✅     | ❌              | ❌      |
-| Application  | ❌     | ✅ All | ✅ Status/Notes | ❌      |
+| Resource     | Create | Read        | Update          | Delete  |
+| ------------ | ------ | ----------- | --------------- | ------- |
+| User         | ❌     | ❌          | ❌              | ❌      |
+| Job (Own)    | ✅     | ✅          | ✅              | ✅ Soft |
+| Job (Others) | ❌     | ❌          | ❌              | ❌      |
+| Application  | ❌     | ✅ Own Jobs | ✅ Status/Notes | ❌      |
 
 **Capabilities**:
 
 - CREATE new job postings (becomes owner via `createdById`)
-- READ all jobs in the company (visibility for coordination)
+- READ only their own jobs ("I Miei Annunci" view)
 - UPDATE/DELETE only jobs they created (ownership rule)
-- VIEW all applications for all jobs
-- UPDATE application status (Kanban drag & drop)
+- VIEW applications for their own jobs only
+- UPDATE application status (workflow management)
 - ADD notes and scores to candidates
 
 **Business Rules**:
@@ -247,30 +248,25 @@ model Application {
 ### Flow 1: Candidate Registration & Application
 
 1. **Landing Page** (Unauthenticated)
-
    - User visits `talenthive.com`
    - Sees login form + "Register as Candidate" link
 
 2. **Registration**
-
    - User clicks "Register"
    - Fills form: `firstName`, `lastName`, `email`, `password`
    - Backend creates `User` with `role=CANDIDATE`
    - Auto-login with JWT cookie
 
 3. **Dashboard (CANDIDATE)**
-
    - Sidebar: Dashboard, Available Jobs, My Applications, Settings
    - Main view: Welcome message + quick stats
 
 4. **Browse Jobs**
-
    - Navigate to "Available Jobs"
    - Sees list of jobs with `status=PUBLISHED`
    - Filters by location, title (optional MVP feature)
 
 5. **Apply to Job**
-
    - Click "Apply" on a job
    - Form: Cover Letter (textarea), Upload CV (PDF)
    - Submit → CV uploaded to MinIO
@@ -287,22 +283,18 @@ model Application {
 ### Flow 2: Recruiter Job Management
 
 1. **Account Provisioning**
-
    - ADMIN creates User with `role=RECRUITER`
    - ADMIN sends credentials to recruiter
 
 2. **Login**
-
    - Recruiter logs in
    - Redirected to dashboard
 
 3. **Dashboard (RECRUITER)**
-
    - Sidebar: Dashboard, Kanban Board, Jobs, Candidates, Settings
    - Main view: Quick stats (open jobs, active candidates, etc.)
 
 4. **Create Job**
-
    - Navigate to "Jobs" → "Create New Job"
    - Form:
      - Title: "Senior React Developer"
@@ -313,12 +305,10 @@ model Application {
    - Save → Job created with `createdById = recruiter.id`
 
 5. **Publish Job**
-
    - Edit job → Change status to PUBLISHED
    - Job now visible to all CANDIDATE users
 
 6. **Manage Applications (Kanban)**
-
    - Navigate to "Kanban Board"
    - Columns: NEW, SCREENING, INTERVIEW, OFFER, HIRED, REJECTED
    - Sees applications as cards
@@ -326,7 +316,6 @@ model Application {
    - Backend updates `application.status`
 
 7. **Review Candidate**
-
    - Click on application card
    - Modal/Drawer shows:
      - Candidate info (name, email)
@@ -349,12 +338,10 @@ model Application {
 ### Flow 3: Admin User Management
 
 1. **Login as ADMIN**
-
    - Uses seeded admin account
    - Dashboard with admin-specific options
 
 2. **Create RECRUITER Account**
-
    - Navigate to "User Management"
    - Click "Create User"
    - Form:
@@ -366,7 +353,6 @@ model Application {
    - Save → User created, credentials emailed (future feature)
 
 3. **Manage All Jobs**
-
    - Navigate to "Jobs"
    - Sees ALL jobs
    - Can edit/delete ANY job (bypass ownership)

@@ -124,11 +124,16 @@ Ogni lezione segue questo formato:
 **Errore**: Usato `style={{ borderLeftColor: ... }}` con logica condizionale inline.
 **Correzione**: **HARD RULE**: Mai usare `style` inline. Usare utility Semantic (es. `getCandidateIndicatorColor` che restituisce classi Tailwind `bg-blue-500`) e `cn()`.
 
-### 2026-01-30 - Fragile Style Derivation
+### 2026-02-02 - React Hook Form & Numeric Inputs
 
-**Contesto**: Derivazione colore bordo da classe background string (`bg-blue-100`).
-**Errore**: Usato `.replace("bg-", "border-")` sulla stringa della classe. Fragile e non deterministico.
-**Correzione**: Creare sempre helper espliciti (switch case) che mappano lo Stato -> Classe finale desiderata (es. `getCandidateIndicatorColor`).
+**Contesto**: Gestione input numerici in form complessi (Obbligatori).
+**Errore**: Usare `string` per evitare mismatch TypeScript, causando complessità di casting.
+**Correzione**:
+
+1. Component: `NumberInputField` normalizza `Input` (che è sempre stringa) in `number | ""` prima del form state.
+2. Schema: `z.union([z.number(), z.literal("")])` per matchare il tipo form.
+3. Validation: `.refine(val => val !== "")` per obbligatorietà.
+4. Risultato: Tipi allineati, UX nativa, zero casting manuali, validazione robusta.
 
 ### 2026-01-30 - UI Constants & Utilities
 
@@ -195,3 +200,24 @@ Ogni lezione segue questo formato:
 2. Usare **Key-Based Reset**: Parent passa `key={resetKey}` ai filtri.
 3. Reset incrementa `resetKey` → React rimonta i componenti → Stato riparte pulito (`useState` inizializza con valori fresh).
    **Regola Agente**: "Se puoi evitare un useEffect, evitalo." (Aggiunto a `frontend.md`).
+
+### 2026-02-02 - Form State: Local State vs react-hook-form
+
+**Contesto**: Creazione `JobDetailDialog` con form di editing.
+**Errore**: Ho usato `useState` per gestire i campi del form invece di usare il pattern documentato con `react-hook-form` + Zod.
+**Correzione**:
+
+1. **SEMPRE** usare `react-hook-form` + `zodResolver` per i form.
+2. Schema Zod va in `{feature}/schemas/{entity}-schema.ts`.
+3. Form component va in `{feature}/components/forms/{EntityForm}.tsx`.
+4. Se in un dialog, il form deve:
+   - Esporre `onDirtyChange` per `smartAutoClose`
+   - Avere il footer DENTRO il `<form>` per Enter key submit
+
+**Pattern documentato in**: `frontend.md` → "Dialog Pattern" e "Form Pattern"
+
+### 2026-02-02 - ZodResolver & TypeScript Generics
+
+**Contesto**: Fix errori TypeScript in `UpdateJobForm` usando componenti field riutilizzabili.
+**Errore**: `react-hook-form` con `zodResolver` inferiva tipi complessi (es. transformed values) che non matchavano con i `Control<TForm>` semplici dei componenti, causando errori di assegnabilità in strict mode.
+**Correzione**: Passare SEMPRE un generic esplicito al componente field (es. `<MyFormValues>`) per guidare l'inferenza e bypassare il mismatch sui tipi interni del resolver. Evitare `as any`.

@@ -4,5 +4,9 @@
   "workspaces": [
     "frontend",
     "backend"
-  ]
+  ],
+  "scripts": {
+    "docker:up": "docker-compose up -d",
+    "dev": "bun run docker:up && bunx concurrently --names \"BACKEND,FRONTEND\" -c \"magenta,blue\" \"bun run --filter backend dev\" \"bun run --filter frontend dev\""
+  }
 }
