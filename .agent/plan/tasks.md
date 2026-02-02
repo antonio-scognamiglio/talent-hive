@@ -10,58 +10,65 @@
 
 ## 🚀 In Corso
 
+_Nessun task attivo._
+
+## 📋 To-Do (Backlog)
+
+- [ ] **Feature: Recruiter Applications Management Page**
+
+  **Scopo**: Pagina per gestire il workflow delle candidature (cambiare status, visualizzare pipeline).
+
+  **Layout**:
+  - Toolbar con filtri:
+    - `SearchableSelectPaginated` per Job (opzionale)
+    - Dropdown Status
+    - Search per nome candidato
+  - **Contatori Status** sopra tabella (query separata `/api/applications/stats`)
+    - Se job selezionato → Contatori per quel job
+    - Se nessun job → Contatori globali
+  - **Tabella Paginata** (`CustomTableStyled` + `PaginationWrapperStyled`)
+    - Colonne: Candidato, Job, Status (dropdown inline), Data, Azioni
+    - Click riga → Dialog Dettaglio Candidatura
+
+  **Cambio Status**:
+  - Dropdown inline nella tabella O nel dialog
+  - Stati finali (HIRED/REJECTED) → Confirmation Dialog (irreversibili)
+
+  **RBAC**:
+  - Edit/Delete solo per owner del job o Admin
+  - Altri recruiter → Read-only
+
+  **Collegamento da Job Detail Dialog**:
+  - Pulsante "Vai alle Candidature" → Naviga a `/applications?jobId=xxx`
+
+  **Sub-tasks**:
+  - [ ] Backend: Endpoint `GET /api/applications/stats` (count per status, filtro jobId opzionale)
+  - [ ] Frontend: `useApplicationFilters` hook (jobId, status, search)
+  - [ ] Frontend: `useApplicationStats` hook (query separata per contatori)
+  - [ ] Frontend: Componente `ApplicationStatusCounters` (badge per ogni status)
+  - [ ] Frontend: Pagina `RecruiterApplicationsPage` con tabella + contatori
+  - [ ] Frontend: Dialog Dettaglio Candidatura (view/edit)
+  - [ ] Frontend: Routing `/applications` per RECRUITER
+
+## ✅ Completate
+
+- [x] **Feature: Job Detail Dialog (Recruiter)**
+  - [x] Rimuovere Eye e Pencil dalla colonna azioni
+  - [x] Aggiungere `onRowClick` alla tabella
+  - [x] JobDetailDialog (VIEW state: badge, stats, desc)
+  - [x] JobDetailDialog (EDIT state: form, update logic)
+  - [x] Integrazione azioni (Edit, Delete, Save, Cancel)
+  - [x] Navigazione Kanban (pulsante presente)
+
+- [x] **Refactoring: UpdateJobForm Type Safety**
+  - [x] `NumberInputField` per input numerici safe (con normalizzazione)
+  - [x] Schema Zod con union (`number | ""`) + superRefine per validazione
+  - [x] TypeScript strictness (no `any`, generic types corretti)
+
 - [x] **BugFix: Reset Filters**
   - Risolto bug "Reset filtri" su `RecruiterJobsPage` e `CandidateJobsPage`
   - Implementato pattern "Key-Based Reset"
   - Rimosso `useEffect` sync anti-pattern
-
-## 📋 To-Do (Backlog)
-
-- [ ] **Feature: Job Detail Dialog (Recruiter)**
-
-  **Pattern UX Consolidato**: "Inline Edit Modal" (usato da Notion, Airtable, Trello, Linear, HubSpot)
-
-  **Azioni sulla Tabella Jobs**:
-  | Azione | UI | Comportamento |
-  |--------|-----|---------------|
-  | Click Row | — | Apre Dialog (View → Edit) |
-  | 🗑️ Trash | Quick Action | Confirmation Dialog → Archivia |
-
-  _Rimuovere Eye e Pencil dalla tabella. Solo Trash come quick action._
-
-  **Dialog Job (due stati)**:
-
-  **Stato VIEW (default)**:
-  - Header: Titolo Job + [X] close
-  - Body: Status (badge), Località, Salario, Descrizione (read-only)
-  - Footer: `[🗑️ Elimina]  [✏️ Modifica]  [→ Kanban]`
-  - Statistiche: "📊 12 candidature" (count già implementato)
-
-  **Stato EDIT (dopo click su Modifica)**:
-  - Header: "Modifica Annuncio" + [X] close
-  - Body: Form con Status (dropdown), Titolo, Località, Salario, Descrizione (textarea)
-  - Footer: `[Annulla]  [💾 Salva]`
-
-  **Comportamenti**:
-  - Click row → Apre Dialog in stato VIEW
-  - Pulsante "Modifica" → Switcha a stato EDIT (form editabile)
-  - Pulsante "Salva" → Chiama updateJob, chiude dialog, torna a tabella
-  - Pulsante "Annulla" → Torna a stato VIEW senza salvare
-  - Pulsante "Elimina" → Confirmation Dialog → Archivia job
-  - Pulsante "Kanban" → Naviga a `/kanban` (gestione workflow candidature)
-
-  **Kanban**:
-  - Per MVP: Kanban globale (mostra tutte le candidature di tutti i job)
-  - Il filtro per job è un enhancement post-MVP
-
-  **Sub-tasks**:
-  - [ ] Rimuovere Eye e Pencil dalla colonna azioni (tenere solo Trash)
-  - [ ] Aggiungere `onRowClick` alla tabella
-  - [ ] Creare `JobDetailDialog` con stato VIEW
-  - [ ] Implementare stato EDIT con form
-  - [ ] Integrare azioni (Elimina, Modifica, Salva, Kanban)
-
-## ✅ Completate
 
 - [x] **Feature: Recruiter Jobs Page**
   - [x] Porting `CustomTable` & Utilities
@@ -69,6 +76,45 @@
   - [x] Implement `RecruiterJobsPage` with Table
   - [x] Aggiunto conteggio candidature (`_count.applications`) in tabella
   - [x] Creato tipo `JobWithCount` per type-safety
+
+- [x] **Feature: Candidate Applications List Page**
+  - [x] Creare hook `useApplications` con paginazione e filtri
+  - [x] Creare pagina `CandidateApplicationsPage` con route
+  - [x] Creare componente `ApplicationCard` per lista
+  - [x] Creare modale `ApplicationDetailModal` con dettagli candidatura
+  - [x] Gestire navigazione job (nuova tab)
+
+- [x] **Refactoring: Centralized Error Handling**
+  - Implementato sistema errori custom (`AppError`, `NotFoundError`, `ForbiddenError`, etc.)
+  - Creato middleware globale error handler in `backend/src/middlewares/error.middleware.ts`
+  - Refactoring completo di Auth, User, Job, Application services e routes
+  - Tutti gli errori ora usano le classi custom invece di `throw new Error()`
+
+- [x] **Feature: Cambio Password (Full-Stack)**
+  - Backend: Aggiungere metodo `changePassword` in `AuthService`
+  - Backend: Esporre endpoint `POST /api/auth/change-password`
+  - Frontend: Creare form `ChangePasswordForm` (vecchia, nuova, conferma)
+  - Frontend: Integrare chiamata API nel tab "Sicurezza"
+
+- [x] **Feature: Aggiornamento Profilo (Full-Stack)**
+  - Backend: Aggiungere endpoint `PUT /api/users/profile` (update firstName, lastName)
+  - Frontend: Creare form `ProfileForm`
+  - Frontend: Integrare chiamata API nel tab "Profilo"
+
+- [x] **Feature: Preferenze Tema (Frontend)**
+  - Frontend: Creare tab "Preferenze"
+  - Frontend: Spostare/Replicare toggle Dark/Light mode qui
+
+- [x] **Pagina Settings: Shell (Frontend)**
+  - Creata pagina `SettingsPage.tsx` con Tabs (Profilo, Sicurezza, Preferenze)
+  - Configurato routing `/settings` con lazy loading
+  - Aggiunta icona Settings e visibilità sidebar
+
+- [x] Integrare `UserMenu` nella Topbar
+  - Importato componente in `AppRoutes`
+  - Passato a `SidebarLayout`
+  - Fixati i tipi in `routing.types.ts`
+  - Aggiustato padding (px-2) e spaziature (rimosso ml-2)
 
 - [x] **Feature: Candidate Applications List Page**
   - [x] Creare hook `useApplications` con paginazione e filtri

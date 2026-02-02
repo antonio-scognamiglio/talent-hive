@@ -296,6 +296,87 @@ const columns = useMemo(
 );
 ```
 
+### Permissions Utils Pattern
+
+Per centralizzare la logica di permessi (RBAC), usare **pure functions** in un file dedicato.
+Queste funzioni possono essere usate ovunque: dialogs, columns.utils, pages, hooks.
+
+**File**: `{feature}/utils/{entity}-permissions.utils.ts`
+
+```tsx
+// job-permissions.utils.ts
+import type { Job, Role } from "@shared/types";
+
+interface UserContext {
+  id: string;
+  role: Role;
+}
+
+/**
+ * Verifica se l'utente può modificare il job
+ * - ADMIN può modificare tutti i job
+ * - Owner può modificare i propri job
+ */
+export function canEditJob(job: Job, user: UserContext): boolean {
+  if (user.role === "ADMIN") return true;
+  return job.createdById === user.id;
+}
+
+export function canDeleteJob(job: Job, user: UserContext): boolean {
+  return canEditJob(job, user); // Stessa logica
+}
+
+export function canViewJobApplications(job: Job, user: UserContext): boolean {
+  if (user.role === "ADMIN") return true;
+  if (user.role === "RECRUITER") return job.createdById === user.id;
+  return false;
+}
+```
+
+**Utilizzo nel Dialog o Component**:
+
+```tsx
+import { canEditJob } from "@/features/jobs/utils/job-permissions.utils";
+import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
+
+function JobDetailDialog({ job }) {
+  const { user } = useAuthContext();
+  const canEdit = user ? canEditJob(job, user) : false;
+
+  return <>{canEdit && <Button onClick={handleEdit}>Modifica</Button>}</>;
+}
+```
+
+**Utilizzo in Column Factory**:
+
+```tsx
+export function createJobColumnsConfig({
+  user, // Passato come dipendenza
+  onDelete,
+}: CreateJobColumnsConfigOptions): ColumnConfig<Job>[] {
+  // ...
+  if (onDelete) {
+    columns.push({
+      key: "actions",
+      cell: (job) => (
+        <>
+          {canDeleteJob(job, user) && (
+            <Button onClick={() => onDelete(job)}>Elimina</Button>
+          )}
+        </>
+      ),
+    });
+  }
+}
+```
+
+**Pattern chiave**:
+
+- Pure functions: `(entity, userContext) → boolean`
+- No side effects, no hooks inside
+- Testabili in isolamento
+- Riutilizzabili ovunque
+
 ---
 
 ## PaginationWrapper + CustomTable Pattern
@@ -687,6 +768,39 @@ const dialog = useStateDialog<EntityType>(["create", "update", "delete"]);
   );
 }
 ```
+
+> **NOTA**: Con il conditional rendering (`dialog.isDialogOpen(...) && <Dialog />`), il componente viene **smontato** quando il dialog si chiude. Questo significa che:
+>
+> - **NON serve `form.reset()`** nel `handleCancel` - lo stato form viene pulito automaticamente
+> - Alla riapertura, `useForm` reinizializza con i `defaultValues`
+> - Questo è il pattern preferito: più semplice e meno bug-prone
+
+### refreshDialogData (aggiornamento dati in-place)
+
+Dopo una mutation (es. update), per aggiornare i dati visualizzati nel dialog senza chiuderlo:
+
+```tsx
+const handleUpdateEntity = useCallback(
+  async (id: string, data: UpdateDto) => {
+    const response = await updateMutation.mutateAsync({ id, data });
+    // Aggiorna il dialog con i dati fresh dalla response
+    if (dialog.selectedItem) {
+      dialog.refreshDialogData({
+        ...response.data,
+        // Preserva campi non inclusi nella response (es. _count)
+        _count: dialog.selectedItem._count,
+      });
+    }
+  },
+  [updateMutation, dialog],
+);
+```
+
+**Perché questo approccio?**
+
+- Usa direttamente la response della mutation (più resiliente)
+- Non dipende dalla cache o dall'invalidation
+- Funziona anche se l'item non è nella pagina corrente (paginazione)
 
 ### CustomDialog Props (smartAutoClose)
 
