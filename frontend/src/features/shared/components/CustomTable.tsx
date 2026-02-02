@@ -182,7 +182,7 @@ export function CustomTable<T>({
         );
       }}
       rowClassName={cn(
-        onRowClick && "cursor-pointer hover:bg-muted/50",
+        onRowClick && "cursor-pointer hover:bg-muted",
         rowClassName,
       )}
       onClick={() => onRowClick?.(item)}

@@ -68,6 +68,40 @@ export function addORConstraints<T = any>(
 }
 
 /**
+ * Adds one or more constraints to an existing where clause using spread/AND.
+ *
+ * **Use this when:** You need to enforce additional filters (e.g., RBAC ownership).
+ * This is simpler than addORConstraints when you just need AND logic.
+ *
+ * @param where - Existing where clause (can be undefined or have filters)
+ * @param constraints - Object with additional constraints to add
+ * @returns Combined where clause
+ *
+ * @example
+ * // Simple: Add single constraint
+ * addWhereConstraints(where, { createdById: userId });
+ * // Result: { ...where, createdById: userId }
+ *
+ * @example
+ * // Multiple constraints
+ * addWhereConstraints(where, { status: "PUBLISHED", isActive: true });
+ *
+ * @example
+ * // Nested constraint
+ * addWhereConstraints(where, { job: { createdById: userId } });
+ */
+export function addWhereConstraints<T extends object = any>(
+  where: T | undefined,
+  constraints: Partial<T>,
+): T {
+  if (!where || Object.keys(where).length === 0) {
+    return constraints as T;
+  }
+
+  return { ...where, ...constraints } as T;
+}
+
+/**
  * Removes restricted fields from where clause for RBAC purposes.
  * Useful when certain roles shouldn't be able to filter on sensitive fields.
  *

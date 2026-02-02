@@ -20,6 +20,7 @@ export interface TextInputFieldProps<TForm extends FieldValues> {
   disabled?: boolean;
   readOnly?: boolean;
   required?: boolean;
+  className?: string;
 }
 
 /**
@@ -44,13 +45,14 @@ export function TextInputField<TForm extends FieldValues>({
   disabled,
   readOnly,
   required,
+  className,
 }: TextInputFieldProps<TForm>) {
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className={className}>
           {label && (
             <FormLabel>
               {label} {required && <span className="text-destructive">*</span>}
@@ -58,6 +60,7 @@ export function TextInputField<TForm extends FieldValues>({
           )}
           <FormControl>
             <Input
+              type="text"
               placeholder={placeholder}
               disabled={disabled}
               readOnly={readOnly}
