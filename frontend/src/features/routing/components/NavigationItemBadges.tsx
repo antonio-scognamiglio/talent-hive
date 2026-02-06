@@ -6,8 +6,8 @@ interface NavigationItemBadgesProps {
   activeTimersCount: number;
   /** Se c'è un timer attivo */
   hasActiveTimer?: boolean;
-  /** Numero di notifiche */
-  badgeCount: number;
+  /** Numero di notifiche (opzionale) */
+  badgeCount?: number;
 }
 
 /**
@@ -22,9 +22,11 @@ export function NavigationItemBadges({
   return (
     <div className="flex items-center gap-2 ml-auto">
       {/* Badge verde pulsante per timer (mostrato se ci sono timer attivi) */}
-      {(activeTimersCount > 0 || hasActiveTimer) && <TimerBadge count={activeTimersCount} />}
-      {/* Badge per notifiche */}
-      <NotificationBadge count={badgeCount} />
+      {(activeTimersCount > 0 || hasActiveTimer) && (
+        <TimerBadge count={activeTimersCount} />
+      )}
+      {/* Badge per notifiche (mostrato solo se badgeCount è fornito) */}
+      {badgeCount !== undefined && <NotificationBadge count={badgeCount} />}
     </div>
   );
 }
