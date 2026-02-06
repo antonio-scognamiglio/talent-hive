@@ -8,10 +8,7 @@ import type {
 } from "@shared/types";
 import type { PaginatedResponse } from "../types/pagination.types";
 import { sanitizePrismaQuery } from "../utils/sanitize-prisma-query.util";
-import {
-  setQueryDefaults,
-  addWhereConstraints,
-} from "../utils/prisma-query.utils";
+import { setQueryDefaults, mergeWhereAND } from "../utils/prisma-query.utils";
 import { NotFoundError, ForbiddenError } from "../errors/app.error";
 
 class JobService {
@@ -32,19 +29,26 @@ class JobService {
       maxTake: 100,
     });
 
-    // RBAC: Apply role-based constraints using utility
+    // RBAC: Apply role-based constraints using AND to ensure they cannot be bypassed
+    const rbacConstraints: Prisma.JobWhereInput[] = [];
+    const userFilters = safeQuery.where;
+
     if (user.role === "CANDIDATE") {
       // CANDIDATE: Force PUBLISHED status (marketplace view)
-      safeQuery.where = addWhereConstraints(safeQuery.where, {
-        status: "PUBLISHED",
-      });
+      rbacConstraints.push({ status: "PUBLISHED" });
     } else if (user.role === "RECRUITER") {
-      // RECRUITER: Only their own jobs
-      safeQuery.where = addWhereConstraints(safeQuery.where, {
-        createdById: user.id,
-      });
+      // RECRUITER: Only their own jobs (unbypassable)
+      rbacConstraints.push({ createdById: user.id });
     }
-    // ADMIN: No restrictions
+    // ADMIN: No RBAC restrictions
+
+    // Combine RBAC constraints with user filters using AND
+    if (rbacConstraints.length > 0) {
+      safeQuery.where = mergeWhereAND([
+        ...rbacConstraints,
+        ...(userFilters ? [userFilters] : []),
+      ]) as Prisma.JobWhereInput;
+    }
 
     // Set defaults using utility
     safeQuery = setQueryDefaults(safeQuery, {
