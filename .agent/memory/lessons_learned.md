@@ -19,6 +19,13 @@ Ogni lezione segue questo formato:
 
 <!-- Le lezioni verranno aggiunte qui sotto -->
 
+### 2026-02-06 - ApiFunctionForGen Type Alignment
+
+**Contesto**: Implementazione JobSearchSelectPaginated con `useSearchableSelectPaginated` che usa `usePaginationForGenWithState`.
+**Errore**: Il tipo `ApiFunctionForGen` aveva `path: TPath` come required, ma il pattern in `usePaginationForGen` mostra che viene sempre passato ma può essere un oggetto vuoto `{}`. Questo causava mismatch con `jobsService.listJobs` che ha `path?` opzionale, richiedendo `as any` cast.
+**Correzione**: Reso `path` opzionale in `ApiFunctionForGen`: `path?: TPath`. Questo permette compatibilità sia con funzioni che accettano path opzionale sia con il pattern di `usePaginationForGen` che passa sempre un oggetto (anche se vuoto).
+**Regola**: Quando definisci tipi generici per API functions, analizza PRIMA il pattern di utilizzo esistente (es. `usePaginationForGen`) invece di assumere i requisiti. Evita `as any` - se serve, è sintomo di type mismatch da correggere alla radice modificando il tipo generico.
+
 ### 2026-01-29 - Lazy Loading in Route Config
 
 **Contesto**: Aggiunta della pagina `SettingsPage` in `routes.config.tsx`.
@@ -221,3 +228,22 @@ Ogni lezione segue questo formato:
 **Contesto**: Fix errori TypeScript in `UpdateJobForm` usando componenti field riutilizzabili.
 **Errore**: `react-hook-form` con `zodResolver` inferiva tipi complessi (es. transformed values) che non matchavano con i `Control<TForm>` semplici dei componenti, causando errori di assegnabilità in strict mode.
 **Correzione**: Passare SEMPRE un generic esplicito al componente field (es. `<MyFormValues>`) per guidare l'inferenza e bypassare il mismatch sui tipi interni del resolver. Evitare `as any`.
+
+### 2026-02-06 - Postgres on Colima/Apple Silicon
+
+**Contesto**: Avvio stack Docker su Mac M1 con Colima.
+**Errore**: Il container `postgres:latest` crasha all'avvio con errori di compatibilità dati/volume ("initdb: directory not empty" o version mismatch).
+**Correzione**: Pinnare esplicitamente l'immagine a `postgres:16-alpine` in `docker-compose.yml` per garantire stabilità e compatibilità su architettura ARM64/Colima.
+
+### 2026-02-06 - Explicit Engine Scripts
+
+**Contesto**: Gestione avvio Docker (Colima vs Docker Desktop).
+**Errore**: Automatizzare l'avvio ("magic scripts") nasconde complessità e crea dipendenze implicite.
+**Correzione**: Creare script espliciti per ciascun engine (`engine:colima`, `engine:docker-desktop`) e lasciare `docker:up` puro (`docker-compose up`). Questo migliora la DX e la chiarezza per i nuovi dev.
+
+### 2026-02-06 - Key-Based Reset Pattern per Componenti Paginati
+
+**Contesto**: Implementazione reset filtri in `RecruiterApplicationsPage` con `JobSearchSelectPaginated` (componente con stato interno complesso: ricerca + paginazione).
+**Errore**: Il componente `JobSearchSelectPaginated` non aveva la prop `key={resetKey}`, quindi quando l'utente faceva "Azzera filtri", il componente non veniva rimontato e manteneva il suo stato interno (query di ricerca, items selezionati). Solo i filtri URL venivano resettati, ma l'UI mostrava ancora i valori vecchi.
+**Correzione**: Aggiunto `key={`job-${resetKey}`}` e `key={`workflow-${resetKey}`}` ai componenti filtro in `RecruiterApplicationsPage`. Quando `resetFilters` incrementa `resetKey`, React rimonta i componenti con stato pulito.
+**Regola**: **SEMPRE** usare il pattern Key-Based Reset per componenti filtro con stato interno complesso (select paginati, date pickers, ecc.). Il `resetKey` deve essere fornito dall'hook filtri (es. `useApplicationFilters`, `useJobFilters`) e passato come `key` prop a TUTTI i componenti filtro nella pagina.
