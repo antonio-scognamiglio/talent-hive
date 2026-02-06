@@ -16,6 +16,9 @@ const CandidateApplicationsPage = lazy(
   () => import("@/pages/candidate/CandidateApplicationsPage"),
 );
 const RecruiterJobsPage = lazy(() => import("@/pages/jobs/RecruiterJobsPage"));
+const RecruiterApplicationsPage = lazy(
+  () => import("@/pages/applications/RecruiterApplicationsPage"),
+);
 const AdminJobsPage = lazy(() => import("@/pages/jobs/AdminJobsPage"));
 
 // Account pages
@@ -121,11 +124,15 @@ export const PROTECTED_ROUTE_GROUPS: RouteGroup<UserRole>[] = [
   },
 
   // ==========================================================================
-  // APPLICATIONS - Candidate applications tracking
+  // APPLICATIONS - Applications management
   // ==========================================================================
   {
     name: "Applications",
-    allowedRoles: [USER_ROLES.CANDIDATE],
+    allowedRoles: [
+      USER_ROLES.CANDIDATE,
+      USER_ROLES.RECRUITER,
+      USER_ROLES.ADMIN,
+    ],
     icon: FileText,
     order: 2,
     routes: [
@@ -140,6 +147,19 @@ export const PROTECTED_ROUTE_GROUPS: RouteGroup<UserRole>[] = [
           showInSidebar: true,
           sidebarOrder: 2,
           description: "Visualizza lo stato delle tue candidature",
+        },
+      },
+      {
+        path: "/applications",
+        element: RecruiterApplicationsPage,
+        allowedRoles: [USER_ROLES.RECRUITER, USER_ROLES.ADMIN],
+        layout: "sidebar",
+        meta: {
+          title: "Gestione Candidature",
+          icon: FileText,
+          showInSidebar: true,
+          sidebarOrder: 2,
+          description: "Gestisci le candidature ricevute",
         },
       },
     ],

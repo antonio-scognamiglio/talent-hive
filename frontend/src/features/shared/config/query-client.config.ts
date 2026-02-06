@@ -107,6 +107,15 @@ export const queryKeys = {
     /** Application detail by ID */
     detail: (id: string) =>
       [...queryKeys.applications.all, "detail", id] as const,
+
+    /**
+     * Application statistics (counts by workflow status)
+     * @param jobId - Optional job ID filter
+     */
+    stats: (jobId?: string) =>
+      jobId
+        ? ([...queryKeys.applications.all, "stats", jobId] as const)
+        : ([...queryKeys.applications.all, "stats"] as const),
   },
 
   // ========================================
