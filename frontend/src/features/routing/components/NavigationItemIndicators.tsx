@@ -1,8 +1,8 @@
 interface NavigationItemIndicatorsProps {
   /** Numero di timer attivi */
   activeTimersCount: number;
-  /** Numero di notifiche */
-  badgeCount: number;
+  /** Numero di notifiche (opzionale) */
+  badgeCount?: number;
 }
 
 /**
@@ -27,8 +27,8 @@ export function NavigationItemIndicators({
           title={timerTitle}
         />
       )}
-      {/* Puntino rosso per notifiche */}
-      {badgeCount > 0 && (
+      {/* Puntino rosso per notifiche (solo se badgeCount fornito) */}
+      {badgeCount !== undefined && badgeCount > 0 && (
         <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
       )}
     </>

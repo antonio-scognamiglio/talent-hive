@@ -7,7 +7,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { NavigationMenuItem } from "../types";
-import { useSidebarBadgeCount } from "../hooks/useSidebarBadgeCount";
 import { useSidebarTimerStatus } from "../hooks/useSidebarTimerStatus";
 import { NavigationItemBadges } from "./NavigationItemBadges";
 import { NavigationItemIndicators } from "./NavigationItemIndicators";
@@ -130,7 +129,8 @@ function NavigationMenuItem({
   activeItemClassName?: string;
   showDescriptions?: boolean;
 }) {
-  const badgeCount = useSidebarBadgeCount(item);
+  // Badge count: attualmente undefined, in futuro implementare logica qui
+  const badgeCount = undefined;
   const timerStatus = useSidebarTimerStatus();
   const Icon = item.icon;
 
@@ -147,7 +147,7 @@ function NavigationMenuItem({
           "text-muted-foreground": !isActive,
         },
         itemClassName,
-        isActive && activeItemClassName
+        isActive && activeItemClassName,
       )}
       onClick={isMobile ? onItemClick : undefined}
     >
@@ -166,14 +166,12 @@ function NavigationMenuItem({
           </div>
           <NavigationItemBadges
             activeTimersCount={timerStatus.activeTimersCount}
-            badgeCount={badgeCount}
           />
         </>
       )}
       {isCollapsed && (
         <NavigationItemIndicators
           activeTimersCount={timerStatus.activeTimersCount}
-          badgeCount={badgeCount}
         />
       )}
     </Link>
@@ -193,7 +191,7 @@ function NavigationMenuItem({
                   {item.description}
                 </span>
               )}
-              {badgeCount > 0 && (
+              {badgeCount !== undefined && badgeCount > 0 && (
                 <span className="text-xs text-destructive">
                   {badgeCount} {badgeCount === 1 ? "notifica" : "notifiche"}
                 </span>
@@ -247,7 +245,7 @@ export function CompactNavigationMenu({
                 "text-muted-foreground": !active,
               },
               itemClassName,
-              active && activeItemClassName
+              active && activeItemClassName,
             )}
             onClick={onItemClick}
           >
