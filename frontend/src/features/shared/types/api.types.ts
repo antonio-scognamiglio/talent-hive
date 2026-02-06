@@ -10,6 +10,6 @@
  */
 export type ApiFunctionForGen<TResponse, TBody = any, TPath = any> = (options: {
   body: TBody;
-  path: TPath;
+  path?: TPath; // Opzionale: può essere undefined se non ci sono path params
   [key: string]: any;
 }) => Promise<TResponse>;

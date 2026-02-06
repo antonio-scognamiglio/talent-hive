@@ -95,4 +95,102 @@ export const applicationsService = {
     );
     return response.data.downloadUrl;
   },
+
+  /**
+   * Get application statistics (counts by workflow status)
+   * GET /api/applications/application-stats?jobId=xxx
+   *
+   * @param jobId - Optional job ID filter
+   * @returns Array of status counts
+   */
+  getApplicationStats: async (
+    jobId?: string,
+  ): Promise<Array<{ status: string; count: number }>> => {
+    const response = await apiClient.get<
+      Array<{ status: string; count: number }>
+    >("/applications/application-stats", {
+      params: jobId && jobId.trim() !== "" ? { jobId } : undefined,
+    });
+    return response.data;
+  },
+
+  /**
+   * Update workflow status (Kanban drag & drop)
+   * PATCH /api/applications/:id/workflow
+   *
+   * @param id - Application ID
+   * @param workflowStatus - New workflow status
+   * @returns Updated application
+   */
+  updateWorkflowStatus: async (
+    id: string,
+    workflowStatus: string,
+  ): Promise<Application> => {
+    const response = await apiClient.patch<Application>(
+      `/applications/${id}/workflow`,
+      { workflowStatus },
+    );
+    return response.data;
+  },
+
+  /**
+   * Hire candidate (final action)
+   * POST /api/applications/:id/hire
+   *
+   * @param id - Application ID
+   * @param data - Optional notes and score
+   * @returns Updated application with HIRED status
+   */
+  hireCandidate: async (
+    id: string,
+    data?: { notes?: string; score?: number },
+  ): Promise<Application> => {
+    const response = await apiClient.post<Application>(
+      `/applications/${id}/hire`,
+      data || {},
+    );
+    return response.data;
+  },
+
+  /**
+   * Reject candidate (final action)
+   * POST /api/applications/:id/reject
+   *
+   * @param id - Application ID
+   * @param data - Rejection details (reason, notes, score)
+   * @returns Updated application with REJECTED status
+   */
+  rejectCandidate: async (
+    id: string,
+    data: { reason?: string; notes?: string; score?: number },
+  ): Promise<Application> => {
+    const response = await apiClient.post<Application>(
+      `/applications/${id}/reject`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Update application (workflow status, notes, score)
+   * PUT /api/applications/:id
+   *
+   * @param id - Application ID
+   * @param data - { workflowStatus, notes, score }
+   * @returns Updated application
+   */
+  updateApplication: async (
+    id: string,
+    data: {
+      workflowStatus?: string;
+      notes?: string;
+      score?: number;
+    },
+  ): Promise<Application> => {
+    const response = await apiClient.put<Application>(
+      `/applications/${id}`,
+      data,
+    );
+    return response.data;
+  },
 };
