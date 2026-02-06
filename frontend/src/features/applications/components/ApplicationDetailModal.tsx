@@ -10,6 +10,7 @@
  */
 
 import { useCallback } from "react";
+import { Link } from "react-router-dom";
 import { CustomDialog } from "@/features/shared/components/CustomDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,13 +40,6 @@ export const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
   const job = application.job;
   const statusLabel = getCandidateDisplayStatus(application.finalDecision);
   const statusColor = getCandidateStatusColor(application.finalDecision);
-
-  // Handler per aprire il job in nuova tab
-  const handleViewJob = useCallback(() => {
-    if (job?.id) {
-      window.open(`/jobs/${job.id}`, "_blank", "noopener,noreferrer");
-    }
-  }, [job]);
 
   // Handler per visualizzare il CV - usa callback passata dal parent
   const handleViewCv = useCallback(() => {
@@ -119,15 +113,23 @@ export const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
         {/* Link al job */}
         <div className="space-y-2">
           <h4 className="font-semibold text-sm">Annuncio di lavoro</h4>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleViewJob}
-            disabled={!job?.id}
-            className="flex items-center gap-2"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Vedi annuncio completo
+          <Button variant="outline" size="sm" disabled={!job?.id} asChild>
+            {job?.id ? (
+              <Link
+                to={`/jobs/${job.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Vedi annuncio completo
+              </Link>
+            ) : (
+              <span className="flex items-center gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Vedi annuncio completo
+              </span>
+            )}
           </Button>
         </div>
       </div>

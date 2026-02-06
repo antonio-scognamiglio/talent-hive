@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { CustomDialog } from "@/features/shared/components/CustomDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,6 @@ export function JobDetailDialog({
   onDelete,
   isUpdating = false,
 }: JobDetailDialogProps) {
-  const navigate = useNavigate();
   const { user } = useAuthContext();
 
   const [mode, setMode] = useState<DialogMode>("view");
@@ -72,11 +71,6 @@ export function JobDetailDialog({
     },
     [job.id, onUpdate],
   );
-
-  const handleGoToApplications = useCallback(() => {
-    navigate(`/applications?jobId=${job.id}`);
-    onClose();
-  }, [navigate, job.id, onClose]);
 
   const handleDeleteClick = useCallback(() => {
     onDelete(job);
@@ -176,9 +170,15 @@ export function JobDetailDialog({
           </>
         )}
       </div>
-      <Button variant="default" size="sm" onClick={handleGoToApplications}>
-        <Users className="h-4 w-4 mr-2" />
-        Vai alle Candidature ({applicationsCount})
+      <Button variant="default" size="sm" asChild>
+        <Link
+          to={`/applications?jobId=${job.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Users className="h-4 w-4 mr-2" />
+          Vai alle Candidature ({applicationsCount})
+        </Link>
       </Button>
     </div>
   );
