@@ -10,11 +10,7 @@
 
 ## 🚀 In Corso
 
-_Nessun task attivo._
-
-## 📋 To-Do (Backlog)
-
-- [ ] **Feature: Recruiter Applications Management Page**
+- [x] **Feature: Recruiter Applications Management Page**
 
   **Scopo**: Pagina per gestire il workflow delle candidature (cambiare status, visualizzare pipeline).
 
@@ -23,7 +19,7 @@ _Nessun task attivo._
     - `SearchableSelectPaginated` per Job (opzionale)
     - Dropdown Status
     - Search per nome candidato
-  - **Contatori Status** sopra tabella (query separata `/api/applications/stats`)
+  - **Contatori Status** sopra tabella (query separata `/api/applications/application-stats`)
     - Se job selezionato → Contatori per quel job
     - Se nessun job → Contatori globali
   - **Tabella Paginata** (`CustomTableStyled` + `PaginationWrapperStyled`)
@@ -42,13 +38,13 @@ _Nessun task attivo._
   - Pulsante "Vai alle Candidature" → Naviga a `/applications?jobId=xxx`
 
   **Sub-tasks**:
-  - [ ] Backend: Endpoint `GET /api/applications/stats` (count per status, filtro jobId opzionale)
-  - [ ] Frontend: `useApplicationFilters` hook (jobId, status, search)
-  - [ ] Frontend: `useApplicationStats` hook (query separata per contatori)
-  - [ ] Frontend: Componente `ApplicationStatusCounters` (badge per ogni status)
-  - [ ] Frontend: Pagina `RecruiterApplicationsPage` con tabella + contatori
-  - [ ] Frontend: Dialog Dettaglio Candidatura (view/edit)
-  - [ ] Frontend: Routing `/applications` per RECRUITER
+  - [x] Backend: Endpoint `GET /api/applications/application-stats` (count per status, filtro jobId opzionale)
+  - [x] Frontend: `useApplicationFilters` hook (jobId, status, search)
+  - [x] Frontend: `useApplicationStats` hook (query separata per contatori)
+  - [x] Frontend: Componente `ApplicationStatusCounters` (badge per ogni status)
+  - [x] Frontend: Pagina `RecruiterApplicationsPage` con tabella + contatori
+  - [x] Frontend: Dialog Dettaglio Candidatura (view/edit)
+  - [x] Frontend: Routing `/applications` per RECRUITER
 
 ## ✅ Completate
 
@@ -76,17 +72,6 @@ _Nessun task attivo._
   - [x] Implement `RecruiterJobsPage` with Table
   - [x] Aggiunto conteggio candidature (`_count.applications`) in tabella
   - [x] Creato tipo `JobWithCount` per type-safety
-
-- [x] **Feature: Candidate Applications List Page**
-  - [x] Creare hook `useApplications` con paginazione e filtri
-  - [x] Creare pagina `CandidateApplicationsPage` con route
-  - [x] Creare componente `ApplicationCard` per lista
-  - [x] Creare modale `ApplicationDetailModal` con dettagli candidatura
-  - [x] Gestire navigazione job (nuova tab)
-
-- [x] **Refactoring: Centralized Error Handling**
-  - Implementato sistema errori custom (`AppError`, `NotFoundError`, `ForbiddenError`, etc.)
-  - Creato middleware globale error handler in `backend/src/middlewares/error.middleware.ts`
   - Refactoring completo di Auth, User, Job, Application services e routes
   - Tutti gli errori ora usano le classi custom invece di `throw new Error()`
 
