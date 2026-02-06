@@ -51,7 +51,7 @@ Ogni feature in `src/features/{feature-name}/` con:
 - **Componente esterno (nel Toolbar)**: Usare `flex-X min-w-XX` per responsiveness
 - **MAI** larghezze fisse (w-44, w-48) - i filtri devono adattarsi allo spazio disponibile
 
-```tsx
+````tsx
 // ✅ Nel componente filtro (OrderByFilter, StatusFilter, etc.)
 <SelectTrigger className={cn("w-full", className)}>
 
@@ -85,7 +85,87 @@ Quando sono presenti filtri, DEVE essere presente un pulsante di reset:
 3.  **Component**: `GhostButton` (stile minimale).
 4.  **Stato**: Sempre visibile, `disabled` se `activeFiltersCount === 0`.
 5.  **Hook**: Il custom hook dei filtri (`useXxxFilters`) deve esporre `resetFilters` e `activeFiltersCount`.
+6.  **Key-Based Reset**: TUTTI i componenti filtro DEVONO ricevere la prop `key={`filter-${resetKey}`}` (vedi sezione sotto).
+
+### Key-Based Reset Pattern per Filtri
+
+**⚠️ REGOLA CRITICA**: Componenti filtro con stato interno complesso (select paginati, date pickers, autocomplete) DEVONO usare il pattern Key-Based Reset.
+
+**Problema**: Quando l'utente fa "Azzera filtri", solo i filtri URL e lo stato del parent vengono resettati. I componenti filtro mantengono il loro stato interno (query di ricerca, items selezionati, pagina corrente) causando UI inconsistente.
+
+**Soluzione**: Passare `key={`filter-${resetKey}`}` a TUTTI i componenti filtro. Quando `resetFilters()` incrementa `resetKey`, React rimonta i componenti con stato pulito.
+
+#### Implementazione Hook Filtri
+
+```tsx
+// ✅ Hook filtri DEVE esporre resetKey
+export function useApplicationFilters({ baseQuery }: UseApplicationFiltersProps) {
+  const [resetKey, setResetKey] = useState(0);
+
+  const resetFilters = useCallback(() => {
+    setJobId(undefined);
+    setWorkflowStatus("all");
+    setFiltersInUrl({}); // Pulisce URL
+    setResetKey((prev) => prev + 1); // Force remount dei filtri
+  }, [setFiltersInUrl]);
+
+  return {
+    jobId,
+    workflowStatus,
+    resetFilters,
+    resetKey, // ← ESPORRE resetKey
+  };
+}
+````
+
+#### Utilizzo nella Pagina
+
+```tsx
+// ✅ CORRETTO - Tutti i filtri hanno key basata su resetKey
+const { jobId, workflowStatus, resetFilters, resetKey } = useApplicationFilters({ baseQuery });
+
+<Toolbar
+  leftContent={
+    <>
+      {/* SearchableSelectPaginated ha stato interno complesso: OBBLIGATORIO usare key */}
+      <JobSearchSelectPaginated
+        key={`job-${resetKey}`}
+        value={jobId}
+        onChange={handleJobIdChange}
+      />
+
+      {/* Filtri standard (Select, Input): OBBLIGATORIO usare key */}
+      <WorkflowStatusFilter
+        key={`workflow-${resetKey}`}
+        value={workflowStatus}
+        onChange={handleWorkflowStatusChange}
+      />
+
+      <SearchInput
+        key={`search-${resetKey}`}
+        value={searchTerm}
+        onSearch={handleSearch}
+      />
+    </>
+  }
+  rightContent={
+    <GhostButton onClick={resetFilters} text="Azzera filtri" />
+  }
+/>
+
+// ❌ SBAGLIATO - Componenti filtro senza key prop
+<JobSearchSelectPaginated value={jobId} onChange={handleJobIdChange} />
+<WorkflowStatusFilter value={workflowStatus} onChange={handleWorkflowStatusChange} />
+// Risultato: UI mostra valori vecchi anche dopo reset
 ```
+
+**Regola assoluta**:
+
+- ✅ Ogni componente filtro nella Toolbar → `key={`nome-${resetKey}`}`
+- ✅ Hook filtri (`useXxxFilters`) → DEVE esporre `resetKey`
+- ✅ `resetFilters()` → DEVE incrementare `setResetKey(prev => prev + 1)`
+
+````
 
 **Perché flex + min-w?**
 
@@ -126,7 +206,7 @@ export function applyFeatureFilters(baseQuery, filters) {
 
   return cleanEmptyNestedObjects(result);
 }
-```
+````
 
 **CRITICAL DECISION RULE**: Components belong to the feature that **OWNS THE DATA**, not where they're used.
 
@@ -801,6 +881,73 @@ const handleUpdateEntity = useCallback(
 - Usa direttamente la response della mutation (più resiliente)
 - Non dipende dalla cache o dall'invalidation
 - Funziona anche se l'item non è nella pagina corrente (paginazione)
+
+### Navigation in New Tab
+
+**⚠️ REGOLA**: Per aprire rotte interne in nuova tab, usare SEMPRE `Link` con `target="_blank"`, **MAI** `window.open()`.
+
+#### ✅ Pattern Corretto: Link component
+
+```tsx
+import { Link } from "react-router-dom";
+
+// Con Button asChild per mantenere stile
+<Button variant="default" size="sm" asChild>
+  <Link to={`/jobs/${job.id}`} target="_blank" rel="noopener noreferrer">
+    <ExternalLink className="h-4 w-4 mr-2" />
+    Vai alla risorsa
+  </Link>
+</Button>
+
+// Con conditional rendering (per disabled state)
+<Button variant="outline" size="sm" disabled={!job?.id} asChild>
+  {job?.id ? (
+    <Link to={`/jobs/${job.id}`} target="_blank" rel="noopener noreferrer">
+      Vedi dettaglio
+    </Link>
+  ) : (
+    <span>Vedi dettaglio</span>
+  )}
+</Button>
+```
+
+#### ❌ Anti-Pattern: window.open per rotte interne
+
+```tsx
+// ❌ SBAGLIATO - Bypassa React Router
+const handleClick = () => {
+  window.open(`/jobs/${job.id}`, "_blank");
+};
+
+<Button onClick={handleClick}>Vai alla risorsa</Button>;
+```
+
+#### Eccezioni: window.open per risorse esterne
+
+`window.open()` è consentito SOLO per:
+
+- **PDF/Blob URL** (es. apertura documenti generati)
+- **URL esterni** (es. siti terzi)
+
+```tsx
+// ✅ OK - Apertura PDF
+const openDocument = (presignedUrl: string) => {
+  window.open(presignedUrl, "_blank");
+};
+
+// ✅ OK - URL esterno
+const openExternalSite = () => {
+  window.open("https://example.com", "_blank");
+};
+```
+
+**Vantaggi Link vs window.open per rotte interne**:
+
+- ✅ Mantiene React Router (client-side routing, code splitting, prefetching)
+- ✅ Shared state e context tra tab
+- ✅ Lazy loading e ottimizzazioni bundle
+- ✅ Transizioni e animazioni
+- ✅ Dichiarativo e idiomatico
 
 ### CustomDialog Props (smartAutoClose)
 
