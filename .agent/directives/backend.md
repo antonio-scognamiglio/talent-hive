@@ -95,6 +95,61 @@ export const entityService = new EntityService();
 
 ---
 
+## Error Messages (Security Critical)
+
+### Regola Generale: Information Hiding
+
+**SEMPRE usare messaggi di errore generici per prevenire information disclosure.**
+
+#### Forbidden/Authorization Errors
+
+❌ **MAI rivelare dettagli su ruoli e permessi**:
+
+```typescript
+// SBAGLIATO
+throw new ForbiddenError("Only admins can access this");
+throw new ForbiddenError("You need RECRUITER role");
+throw new ForbiddenError("This endpoint is for recruiters and admins");
+```
+
+✅ **Usare messaggi generici**:
+
+```typescript
+// CORRETTO
+throw new ForbiddenError("Access denied");
+throw new ForbiddenError("Not authorized");
+```
+
+#### NotFound Errors
+
+✅ **Per ownership checks, usare NotFoundError invece di ForbiddenError**:
+
+```typescript
+// CORRETTO: Non rivelare se la risorsa esiste
+if (user.role === "CANDIDATE" && entity.userId !== user.id) {
+  throw new NotFoundError("Entity not found"); // Non dire "you don't own this"
+}
+```
+
+#### Validation Errors
+
+✅ **I validation errors possono essere più specifici (ma senza rivelare logica interna)**:
+
+```typescript
+// CORRETTO
+throw new ValidationError("Job ID is required");
+throw new ValidationError("Invalid email format");
+
+// SBAGLIATO
+throw new ValidationError(
+  "You can only apply if job status is PUBLISHED and you're a CANDIDATE",
+);
+```
+
+**Rationale**: Messaggi verbosi rivelano la struttura dell'autorizzazione, aiutando attaccanti a capire come bypassare i controlli.
+
+---
+
 ## Routes Pattern
 
 ```typescript
@@ -175,6 +230,63 @@ router.get("/:id", authenticate, (req, res) => {
   // Don't do RBAC here
 });
 ```
+
+### Defense-in-Depth (Critical)
+
+**REGOLA**: Mai dare per scontato che i controlli a livello route siano sufficienti. Implementare SEMPRE controlli espliciti nei service methods.
+
+**Razionale**: Un utente curioso potrebbe:
+
+- Modificare il frontend e chiamare endpoint non autorizzati
+- Bypassare middleware se ci sono bug nella route definition
+- Usare tool come Postman/curl per chiamare API direttamente
+
+**Pattern Corretto**:
+
+```typescript
+// ✅ Service: Doppio controllo con messaggi generici
+async getStats(filters: {}, user: UserWithoutPassword) {
+  // 1. Defense-in-depth: Block unauthorized roles explicitly
+  // ⚠️ Use generic error message to prevent information disclosure
+  if (user.role === "CANDIDATE") {
+    throw new ForbiddenError("Access denied");
+  }
+
+  // 2. Continue with business logic
+  if (user.role === "RECRUITER") {
+    // Filter data by ownership
+    if (!ownsResource) {
+      throw new ForbiddenError("Access denied"); // Generic, don't reveal details
+    }
+  }
+  // ...
+}
+
+// Route: Primo livello di controllo
+router.get("/stats", authenticate, async (req, res, next) => {
+  try {
+    if (req.user!.role === "CANDIDATE") {
+      throw new ForbiddenError("Access denied"); // Generic message
+    }
+    const stats = await service.getStats({}, req.user!);
+    res.json(stats);
+  } catch (error) {
+    next(error);
+  }
+});
+```
+
+**Principio Aggiuntivo: Information Hiding**
+
+- ❌ MAI rivelare dettagli sull'autorizzazione ("Only admins can...", "You need RECRUITER role...")
+- ✅ Usare sempre messaggi generici ("Access denied", "Not authorized")
+- **Rationale**: Prevenire information disclosure su ruoli e permessi dell'applicazione
+
+Questo garantisce sicurezza anche se:
+
+- La route viene modificata per errore
+- Il service viene chiamato da altri contesti
+- Ci sono bug nei middleware
 
 ---
 
