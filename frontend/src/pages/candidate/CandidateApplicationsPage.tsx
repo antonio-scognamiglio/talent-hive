@@ -3,14 +3,10 @@ import { PageContent } from "@/features/shared/components/layout/PageContent";
 import { PageHeader } from "@/features/shared/components/layout/PageHeader";
 import { useApplications } from "@/features/applications/hooks/useApplications";
 import { useMyApplications } from "@/features/applications/hooks/useMyApplications";
-import {
-  useApplicationFilters,
-  APPLICATION_ORDER_BY_OPTIONS,
-} from "@/features/applications/hooks/useApplicationFilters";
+import { useApplicationFilters } from "@/features/applications/hooks/useApplicationFilters";
 import {
   ApplicationCard,
   ApplicationDetailModal,
-  ApplicationStatusFilter,
 } from "@/features/applications/components";
 import { PaginationWrapperStyled } from "@/features/pagination/components/PaginationWrapperStyled";
 import {
@@ -23,8 +19,8 @@ import {
   Spinner,
   Toolbar,
   RefreshButton,
-  PrimaryButton,
 } from "@/features/shared/components";
+import { GhostButton } from "@/features/shared/components/GhostButton";
 import {
   SearchInput,
   OrderByFilter,
@@ -33,6 +29,8 @@ import { useStateDialog } from "@/features/shared/hooks/useStateDialog";
 import { FileText, X } from "lucide-react";
 import type { Application } from "@shared/types";
 import type { PrismaQueryOptions } from "@/features/shared/types/prismaQuery.types";
+import { ApplicationStatusFilter } from "@/features/applications/components/filters/ApplicationStatusFilter";
+import { APPLICATION_ORDER_BY_OPTIONS } from "@/features/applications/constants/applications-options";
 
 /**
  * CandidateApplicationsPage
@@ -71,7 +69,7 @@ export default function CandidateApplicationsPage() {
 
   const { getApplicationsPaginatedQuery } = useApplications({
     pageSize,
-    defaultPrismaQuery: prismaQuery,
+    prismaQuery,
   });
 
   // Get handleViewCv from useMyApplications
@@ -141,7 +139,7 @@ export default function CandidateApplicationsPage() {
         }
         rightContent={
           <>
-            <PrimaryButton
+            <GhostButton
               text="Azzera filtri"
               onClick={resetFilters}
               disabled={activeFiltersCount === 0}
