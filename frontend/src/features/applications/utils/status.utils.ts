@@ -7,9 +7,7 @@
  * @param status - The workflow status (NEW, SCREENING, etc.)
  * @returns Tailwind CSS classes string
  */
-export const getApplicationStatusColor = (
-  status: string | undefined,
-): string => {
+export const getWorkflowStatusColor = (status: string | undefined): string => {
   switch (status) {
     case "NEW":
       return "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
@@ -19,6 +17,16 @@ export const getApplicationStatusColor = (
       return "bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800";
     case "OFFER":
       return "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800";
+    case "DONE":
+      return "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
+    default:
+      return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
+  }
+};
+export const getFinalDecisionStatusColor = (
+  status: string | undefined,
+): string => {
+  switch (status) {
     case "HIRED":
       return "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800";
     case "REJECTED":
@@ -45,6 +53,17 @@ export const getApplicationStatusLabel = (
       return "Colloquio";
     case "OFFER":
       return "Offerta";
+    case "DONE":
+      return "Completata";
+    default:
+      return "Sconosciuto";
+  }
+};
+
+export const getFinalDecisionStatusLabel = (
+  status: string | undefined,
+): string => {
+  switch (status) {
     case "HIRED":
       return "Assunto";
     case "REJECTED":

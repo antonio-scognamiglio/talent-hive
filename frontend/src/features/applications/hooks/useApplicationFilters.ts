@@ -13,16 +13,22 @@ import {
   type FilterParamConfig,
 } from "@/features/shared/hooks/useUrlFilters";
 import { applyApplicationFilters } from "../mappers/applyApplicationFilters";
-import type { ApplicationStatusFilterValue } from "../components/filters";
-import type { OrderByOption } from "@/features/shared/components/filters";
+import {
+  type WorkflowStatusFilterValue,
+  WORKFLOW_STATUS_FILTER_OPTIONS,
+  type FinalDecisionStatusFilterValue,
+  APPLICATION_STATUS_FILTER_OPTIONS,
+} from "../constants/applications-options";
 
 /**
  * Tipo per i filtri sincronizzati con URL
  */
 export type ApplicationUrlFilters = {
   searchTerm?: string;
-  statusFilter?: ApplicationStatusFilterValue;
+  statusFilter?: FinalDecisionStatusFilterValue;
+  workflowStatus?: WorkflowStatusFilterValue;
   orderBy?: string;
+  jobId?: string;
 };
 
 /**
@@ -32,15 +38,6 @@ interface UseApplicationFiltersProps {
   /** Query base Prisma */
   baseQuery: PrismaQueryOptions<Application>;
 }
-
-/**
- * Opzioni di ordinamento per le applications
- */
-export const APPLICATION_ORDER_BY_OPTIONS: OrderByOption[] = [
-  { label: "Nessun ordinamento", value: "none" },
-  { label: "Più recenti", value: "createdAt-desc" },
-  { label: "Meno recenti", value: "createdAt-asc" },
-];
 
 /**
  * Configurazione dei query params per i filtri applications
@@ -57,14 +54,34 @@ export const APPLICATION_FILTER_PARAM_CONFIGS: FilterParamConfig<ApplicationUrlF
       param: "status",
       key: "statusFilter",
       parse: (v) =>
-        v === "pending" || v === "HIRED" || v === "REJECTED"
-          ? (v as ApplicationStatusFilterValue)
+        typeof v === "string" &&
+        APPLICATION_STATUS_FILTER_OPTIONS.some((opt) => opt.value === v) &&
+        v !== "all"
+          ? (v as FinalDecisionStatusFilterValue)
+          : undefined,
+      serialize: (v) => (v && v !== "all" ? v : null),
+    },
+
+    {
+      param: "workflowStatus",
+      key: "workflowStatus",
+      parse: (v) =>
+        typeof v === "string" &&
+        WORKFLOW_STATUS_FILTER_OPTIONS.some((opt) => opt.value === v) &&
+        v !== "all"
+          ? (v as WorkflowStatusFilterValue)
           : undefined,
       serialize: (v) => (v && v !== "all" ? v : null),
     },
     {
       param: "orderBy",
       key: "orderBy",
+      parse: (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
+      serialize: (v) => (typeof v === "string" && v.trim() !== "" ? v : null),
+    },
+    {
+      param: "jobId",
+      key: "jobId",
       parse: (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
       serialize: (v) => (typeof v === "string" && v.trim() !== "" ? v : null),
     },
@@ -87,12 +104,17 @@ export function useApplicationFilters({
     filtersFromUrl.searchTerm ?? "",
   );
   const [statusFilter, setStatusFilter] =
-    useState<ApplicationStatusFilterValue>(
+    useState<FinalDecisionStatusFilterValue>(
       filtersFromUrl.statusFilter ?? "all",
+    );
+  const [workflowStatus, setWorkflowStatus] =
+    useState<WorkflowStatusFilterValue>(
+      (filtersFromUrl.workflowStatus as WorkflowStatusFilterValue) ?? "all",
     );
   const [orderBy, setOrderBy] = useState<string | undefined>(
     filtersFromUrl.orderBy,
   );
+  const [jobId, setJobId] = useState<string | undefined>(filtersFromUrl.jobId);
 
   // Key per forzare il remount dei componenti filtro al reset
   const [resetKey, setResetKey] = useState(0);
@@ -102,10 +124,12 @@ export function useApplicationFilters({
     const filters = {
       searchTerm: searchTerm || undefined,
       statusFilter: statusFilter,
+      workflowStatus: workflowStatus,
       orderBy: orderBy,
+      jobId: jobId,
     };
     return applyApplicationFilters(baseQuery, filters);
-  }, [baseQuery, searchTerm, statusFilter, orderBy]);
+  }, [baseQuery, searchTerm, statusFilter, workflowStatus, orderBy, jobId]);
 
   // Handler per la ricerca
   const handleSearch = useCallback(
@@ -116,11 +140,20 @@ export function useApplicationFilters({
     [setFiltersInUrl],
   );
 
-  // Handler per status filter
+  // Handler per status filter (Candidate View)
   const handleStatusChange = useCallback(
-    (value: ApplicationStatusFilterValue) => {
+    (value: FinalDecisionStatusFilterValue) => {
       setStatusFilter(value);
       setFiltersInUrl({ statusFilter: value });
+    },
+    [setFiltersInUrl],
+  );
+
+  // Handler per workflow status (Recruiter View)
+  const handleWorkflowStatusChange = useCallback(
+    (value: WorkflowStatusFilterValue) => {
+      setWorkflowStatus(value);
+      setFiltersInUrl({ workflowStatus: value });
     },
     [setFiltersInUrl],
   );
@@ -134,35 +167,49 @@ export function useApplicationFilters({
     [setFiltersInUrl],
   );
 
+  // Handler per jobId change
+  const handleJobIdChange = useCallback(
+    (value: string | undefined) => {
+      setJobId(value);
+      setFiltersInUrl({ jobId: value });
+    },
+    [setFiltersInUrl],
+  );
+
   // Resetta tutti i filtri
   const resetFilters = useCallback(() => {
     setSearchTerm("");
     setStatusFilter("all");
+    setWorkflowStatus("all");
     setOrderBy(undefined);
+    setJobId(undefined);
     setFiltersInUrl({});
     setResetKey((prev) => prev + 1);
   }, [setFiltersInUrl]);
 
-  // Conta i filtri attivi (per mostrare il pulsante reset)
+  // Conta i filtri attivi
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (searchTerm) count++;
     if (statusFilter && statusFilter !== "all") count++;
+    if (workflowStatus && workflowStatus !== "all") count++;
     if (orderBy && orderBy !== "none") count++;
+    if (jobId) count++;
     return count;
-  }, [searchTerm, statusFilter, orderBy]);
+  }, [searchTerm, statusFilter, workflowStatus, orderBy, jobId]);
 
   return {
-    // Valori dei filtri
     searchTerm,
     statusFilter,
+    workflowStatus,
     orderBy,
-    // Query Prisma con filtri applicati
+    jobId,
     prismaQuery,
-    // Handler per cambiare i filtri
     handleSearch,
     handleStatusChange,
+    handleWorkflowStatusChange,
     handleOrderByChange,
+    handleJobIdChange,
     resetFilters,
     resetKey,
     activeFiltersCount,

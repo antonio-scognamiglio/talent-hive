@@ -14,15 +14,20 @@ import {
   cleanPrismaQuery,
   updateSearchConditions,
 } from "@/features/shared/utils/prisma-query-utils";
-import type { ApplicationStatusFilterValue } from "../components/filters";
+import type {
+  FinalDecisionStatusFilterValue,
+  WorkflowStatusFilterValue,
+} from "../constants/applications-options";
 
 /**
  * Valori dei filtri per la ricerca applications
  */
 export interface ApplicationFilters {
   searchTerm?: string;
-  statusFilter?: ApplicationStatusFilterValue;
+  statusFilter?: FinalDecisionStatusFilterValue;
+  workflowStatus?: WorkflowStatusFilterValue; // Workflow status
   orderBy?: string;
+  jobId?: string;
 }
 
 /**
@@ -38,15 +43,24 @@ export function applyApplicationFilters(
   if (filters.searchTerm !== undefined) {
     result = updateSearchConditions(
       result,
-      ["job.title"], // Nested search on job.title
+      ["job.title"],
       filters.searchTerm,
     ) as PrismaQueryOptions<Application>;
   }
 
-  // Applica filtro status (finalDecision)
+  // Applica filtro jobId (mostra solo candidature per un job specifico)
+  if (filters.jobId) {
+    result = cleanPrismaQuery(
+      result,
+      "jobId" as keyof Application,
+      filters.jobId,
+      "where",
+    ) as PrismaQueryOptions<Application>;
+  }
+
+  // Applica filtro status (finalDecision) - Vista Candidato
   if (filters.statusFilter && filters.statusFilter !== "all") {
     if (filters.statusFilter === "pending") {
-      // "pending" = finalDecision è null (in attesa)
       result = cleanPrismaQuery(
         result,
         "finalDecision" as keyof Application,
@@ -62,6 +76,16 @@ export function applyApplicationFilters(
         "where",
       ) as PrismaQueryOptions<Application>;
     }
+  }
+
+  // Applica filtro workflowStatus - Vista Recruiter
+  if (filters.workflowStatus && filters.workflowStatus !== "all") {
+    result = cleanPrismaQuery(
+      result,
+      "workflowStatus" as keyof Application,
+      filters.workflowStatus,
+      "where",
+    ) as PrismaQueryOptions<Application>;
   }
 
   // Applica ordinamento
