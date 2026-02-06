@@ -65,6 +65,34 @@ router.get(
     }
   },
 );
+/**
+ * GET /api/applications/application-stats
+ * Get application statistics (counts by workflow status)
+ * Auth: Required (RECRUITER/ADMIN only)
+ * Query: ?jobId=xxx (optional)
+ */
+router.get(
+  "/application-stats",
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Role check: Only RECRUITER and ADMIN
+      if (req.user!.role === "CANDIDATE") {
+        throw new ForbiddenError("Access denied");
+      }
+
+      const jobId = req.query.jobId as string | undefined;
+      const stats = await applicationService.getApplicationStats(
+        { jobId },
+        req.user!,
+      );
+
+      res.json(stats);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 /**
  * GET /api/applications/:id
@@ -190,10 +218,42 @@ router.post(
   authMiddleware,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const { notes, score } = req.body;
+
       const application = await applicationService.hireCandidate(
         req.params.id,
+        notes,
+        score,
         req.user!,
       );
+      res.json(application);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+/**
+ * PUT /api/applications/:id
+ * Update application (workflow status, notes, score)
+ * Auth: Required (RECRUITER/ADMIN - owner only)
+ * Body: { workflowStatus?: string, notes?: string, score?: number }
+ */
+router.put(
+  "/:id",
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { workflowStatus, notes, score } = req.body;
+
+      const application = await applicationService.updateApplication(
+        req.params.id,
+        workflowStatus,
+        notes,
+        score,
+        req.user!,
+      );
+
       res.json(application);
     } catch (error) {
       next(error);
@@ -212,36 +272,11 @@ router.post(
   authMiddleware,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { reason } = req.body;
+      const { reason, notes, score } = req.body;
 
       const application = await applicationService.rejectCandidate(
         req.params.id,
         reason,
-        req.user!,
-      );
-
-      res.json(application);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-/**
- * PATCH /api/applications/:id/notes
- * Add notes/score to application
- * Auth: Required (RECRUITER/ADMIN - owner only)
- * Body: { notes?: string, score?: number }
- */
-router.patch(
-  "/:id/notes",
-  authMiddleware,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { notes, score } = req.body;
-
-      const application = await applicationService.updateNotes(
-        req.params.id,
         notes,
         score,
         req.user!,
@@ -253,5 +288,6 @@ router.patch(
     }
   },
 );
+
 
 export default router;
