@@ -50,7 +50,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         <Button
           variant="outline"
           onClick={onRetry}
-          className="flex items-center gap-2 border-destructive text-destructive hover:bg-destructive/10"
+          className="flex items-center gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
         >
           <RefreshCw className="h-4 w-4" />
           {retryText}
