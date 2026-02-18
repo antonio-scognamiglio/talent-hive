@@ -101,7 +101,14 @@ export default function RecruiterApplicationsPage() {
         id,
         ...data,
       });
-      dialog.refreshDialogData(updatedApp);
+
+      // Merge updated fields with existing selectedItem to preserve relations (user, job)
+      if (dialog.selectedItem) {
+        dialog.refreshDialogData({
+          ...dialog.selectedItem,
+          ...updatedApp,
+        });
+      }
     } catch {
       // Error handled by hook
     }
