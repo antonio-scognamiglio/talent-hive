@@ -67,6 +67,27 @@ _Nessuna task in corso_
 
 ## Completate Oggi (Non Ancora Spostate)
 
+- [x] **ApplicationDetailDialog - Modular Refactor & Smart UX**
+  - **Extracted** `ApplicationDetailView.tsx` (Pure Presentational)
+  - **Updated** `UpdateApplicationForm.tsx` to expose values via `onValuesChange`
+  - **Refactored** `ApplicationDetailDialog.tsx` as Controller:
+    - Implemented Unified Footer with "Smart Actions"
+    - "Assumi" / "Rifiuta" always visible
+    - **Smart Confirmation**: Warns about unsaved changes and saves them on confirmation
+    - Cleaner code separation between View and Edit logic
+
+- [x] **Fix: Application Dialog Data Refresh**
+  - Resolved "undefined" user/job issue after update
+  - Implemented smart merge in `RecruiterApplicationsPage` using `refreshDialogData`
+  - Preserves relations (`user`, `job`) while updating status/notes/score
+  - No need for full refetch to see updates in dialog
+
+- [x] **Feat: Role-Based Status Labels**
+  - Created `role-utils.ts` to centralize role logic
+  - Updated `status.utils.ts` to be context-aware (Candidate vs Recruiter views)
+  - Mapped statuses: "NEW" -> "Inviata" (Candidate) / "Nuova" (Recruiter)
+  - Removed `as any` casts for better type safety
+
 - [x] **BugFix: Reset Filtri in RecruiterApplicationsPage**
   - Fixed filter reset bug by applying Key-Based Reset pattern
   - Added `resetKey` prop to `JobSearchSelectPaginated` and `WorkflowStatusFilter`
@@ -91,19 +112,7 @@ _Nessuna task in corso_
 
 ## Prossimo Task da Iniziare
 
-## Prossimo Task da Iniziare
-
-**ApplicationDetailDialog - Modular Refactor & Smart UX**:
-
-- [ ] **Extract** `ApplicationDetailView.tsx` component (Pure Presentational)
-- [ ] **Update** `UpdateApplicationForm.tsx` to expose values (`onValuesChange`) for smart actions
-- [ ] **Refactor** `ApplicationDetailDialog.tsx` as Controller:
-  - Manage interactions between View/Edit modes
-  - Implement **Smart Confirmation Logic** (Hire/Reject with dirty state warning)
-  - Unified Footer management
-- [ ] **Verify** UX Flows:
-  - Edit -> Dirty -> Hire -> Confirm (Should save + hire)
-  - View -> Hire -> Confirm (Standard hire)
+_Nessun task pianificato_
 
 ## Note Importanti
 
