@@ -1,4 +1,5 @@
 import type { OrderByOption } from "@/features/shared/components";
+import type { WorkflowStatus } from "@shared/types/entities/generated/interfaces";
 
 export type FinalDecisionStatusFilterValue =
   | "all"
@@ -16,24 +17,29 @@ export const APPLICATION_STATUS_FILTER_OPTIONS: {
   { label: "Rifiutato", value: "REJECTED" },
 ];
 
-export type WorkflowStatusFilterValue =
-  | "all"
-  | "NEW"
-  | "SCREENING"
-  | "INTERVIEW"
-  | "OFFER"
-  | "DONE";
+export type WorkflowStatusFilterValue = "all" | WorkflowStatus;
+
+// Totale degli stati possibili (dal tipo generato)
+// Definito come const tuple per compatibilità con Zod senza cast
+export const ALL_WORKFLOW_STATUSES = [
+  "NEW",
+  "SCREENING",
+  "INTERVIEW",
+  "OFFER",
+  "DONE",
+] as const;
+
+import { getApplicationStatusLabel } from "../utils/status.utils";
 
 export const WORKFLOW_STATUS_FILTER_OPTIONS: {
   label: string;
   value: WorkflowStatusFilterValue;
 }[] = [
   { label: "Tutti gli stati", value: "all" },
-  { label: "Nuova", value: "NEW" },
-  { label: "Screening", value: "SCREENING" },
-  { label: "Colloquio", value: "INTERVIEW" },
-  { label: "Offerta", value: "OFFER" },
-  { label: "Completata", value: "DONE" },
+  ...ALL_WORKFLOW_STATUSES.map((status) => ({
+    label: getApplicationStatusLabel(status),
+    value: status,
+  })),
 ];
 
 /**

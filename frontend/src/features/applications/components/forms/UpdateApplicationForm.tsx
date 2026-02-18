@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import {
@@ -26,8 +26,9 @@ import {
 import type { Application } from "@shared/types";
 import {
   SCORE_OPTIONS,
-  WORKFLOW_STATUS_FILTER_OPTIONS,
+  ALL_WORKFLOW_STATUSES,
 } from "@/features/applications/constants/applications-options";
+import { getApplicationStatusLabel } from "@/features/applications/utils/status.utils";
 
 interface UpdateApplicationFormProps {
   application: Application;
@@ -35,12 +36,18 @@ interface UpdateApplicationFormProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   onDirtyChange?: (isDirty: boolean) => void;
+  onValuesChange?: (values: Partial<UpdateApplicationFormValues>) => void;
+
+  id?: string;
+  hideFooter?: boolean;
 }
 
-const WORKFLOW_STATUS_OPTIONS = WORKFLOW_STATUS_FILTER_OPTIONS.filter(
-  (opt) =>
-    opt.value !== "all" && opt.value !== "DONE" && opt.value !== undefined,
-);
+const WORKFLOW_STATUS_OPTIONS = ALL_WORKFLOW_STATUSES.filter(
+  (s) => s !== "DONE",
+).map((status) => ({
+  label: getApplicationStatusLabel(status),
+  value: status,
+}));
 
 /**
  * Form per aggiornamento Application.
@@ -52,11 +59,14 @@ export const UpdateApplicationForm: React.FC<UpdateApplicationFormProps> = ({
   onCancel,
   isSubmitting = false,
   onDirtyChange,
+  onValuesChange,
+  id,
+  hideFooter = false,
 }) => {
   const form = useForm<UpdateApplicationFormValues>({
     resolver: zodResolver(updateApplicationSchema),
     defaultValues: {
-      workflowStatus: application.workflowStatus as any,
+      workflowStatus: application.workflowStatus,
       notes: application.notes ?? "",
       score: application.score ?? undefined,
     },
@@ -66,6 +76,14 @@ export const UpdateApplicationForm: React.FC<UpdateApplicationFormProps> = ({
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
   }, [form.formState.isDirty, onDirtyChange]);
+
+  // useWatch hook per tracciare i valori in modo sicuro per React Compiler
+  const currentValues = useWatch({ control: form.control });
+
+  // Notify parent when values change (per Smart Actions)
+  useEffect(() => {
+    onValuesChange?.(currentValues);
+  }, [currentValues, onValuesChange]);
 
   const handleSubmit = useCallback(
     async (data: UpdateApplicationFormValues) => {
@@ -84,6 +102,7 @@ export const UpdateApplicationForm: React.FC<UpdateApplicationFormProps> = ({
   return (
     <Form {...form}>
       <form
+        id={id}
         onSubmit={form.handleSubmit(handleSubmit)}
         className="flex flex-col h-full"
       >
@@ -173,19 +192,21 @@ export const UpdateApplicationForm: React.FC<UpdateApplicationFormProps> = ({
         </div>
 
         {/* Footer DENTRO form per Enter key submit */}
-        <div className="shrink-0 border-t p-4 flex justify-end gap-3">
-          <SecondaryButton
-            type="button"
-            text="Annulla"
-            onClick={handleCancel}
-            disabled={isSubmitting}
-          />
-          <PrimaryButton
-            type="submit"
-            text={isSubmitting ? "Salvataggio..." : "Salva"}
-            disabled={isSubmitting || !form.formState.isDirty}
-          />
-        </div>
+        {!hideFooter && (
+          <div className="shrink-0 border-t p-4 flex justify-end gap-3">
+            <SecondaryButton
+              type="button"
+              text="Annulla"
+              onClick={handleCancel}
+              disabled={isSubmitting}
+            />
+            <PrimaryButton
+              type="submit"
+              text={isSubmitting ? "Salvataggio..." : "Salva"}
+              disabled={isSubmitting || !form.formState.isDirty}
+            />
+          </div>
+        )}
       </form>
     </Form>
   );
