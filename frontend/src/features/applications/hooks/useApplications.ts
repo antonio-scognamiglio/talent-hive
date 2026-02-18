@@ -56,9 +56,11 @@ export const useApplications = ({
         score,
       }),
     onSuccess: () => {
+      // 1. Invalidate queries to ensure eventual consistency
       queryClient.invalidateQueries({
         queryKey: getApplicationsPaginatedQuery.queryKey,
       });
+
       // Invalidate stats too as status might have changed
       queryClient.invalidateQueries({
         queryKey: queryKeys.applications.stats(),

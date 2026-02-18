@@ -36,25 +36,32 @@ export const getFinalDecisionStatusColor = (
   }
 };
 
+import { isCandidate } from "@/features/shared/utils/role-utils";
+import type { UserRole } from "@/features/shared/types/roles.types";
+
 /**
  * Returns a human-readable label for the application status
  * @param status - The workflow status
+ * @param role - Optional user or role to determine context (Candidate vs Recruiter)
  * @returns Localized label string
  */
 export const getApplicationStatusLabel = (
   status: string | undefined,
+  role?: UserRole,
 ): string => {
+  const isCand = isCandidate(role);
+
   switch (status) {
     case "NEW":
-      return "Inviata";
+      return isCand ? "Inviata" : "Nuova";
     case "SCREENING":
-      return "In revisione";
+      return isCand ? "In revisione" : "In revisione"; // Same for now, but could be specific
     case "INTERVIEW":
       return "Colloquio";
     case "OFFER":
       return "Offerta";
     case "DONE":
-      return "Completata";
+      return "Completata"; // Or "Chiusa" for recruiter? Keep consistent for now.
     default:
       return "Sconosciuto";
   }
