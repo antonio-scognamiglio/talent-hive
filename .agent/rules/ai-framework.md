@@ -57,6 +57,14 @@ L'agente **DEVE** seguire questo protocollo per mantenere la memoria del progett
   1. Aggiorna `active_context.md` con lo stato corrente.
   2. Assicurati che `lessons_learned.md` contenga eventuali nuove regole scoperte.
 
+### 5. Regole per i Commit (Conventional Commits)
+
+- Il progetto usa `husky`, `commitizen` e `commitlint` per garantire che i messaggi di commit rispettino lo standard **Conventional Commits**.
+- **LINGUA OBBLIGATORIA**: I messaggi di commit e le descrizioni DEVONO rigorosamente essere scritti in **Inglese**. Non ci devono essere assolutamente commit in italiano.
+- Quando viene richiesto all'agente di eseguire l'accesso a Git e completare un commit per conto dell'utente, l'agente **DEVE** generare messaggi conformi allo standard (es. `feat(jobs): add status filter`, `fix(ui): resolve padding issue`, `build(git): configure husky rules`).
+- **Tipi ammessi**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+- Se esegui il commit tramite terminale, ricorda che `lint-staged` formatterà il codice (ESLint) e controllerà la tipizzazione (TypeScript `tsc --noEmit`) passivamente.
+
 ---
 
 ---
