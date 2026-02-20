@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   // Esegui ESLint su tutti i file JS/TS modificati all'interno di frontend/
   "frontend/**/*.{js,jsx,ts,tsx}": ["bun run --filter frontend lint"],
 
