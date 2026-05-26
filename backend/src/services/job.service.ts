@@ -95,10 +95,11 @@ class JobService {
    * Only RECRUITER and ADMIN can create
    */
   async createJob(data: CreateJobDto, userId: string): Promise<Job> {
+    const { status, ...jobData } = data;
     return prisma.job.create({
       data: {
-        ...data,
-        status: "DRAFT",
+        ...jobData,
+        status: status === "PUBLISHED" ? "PUBLISHED" : "DRAFT",
         createdById: userId,
       },
     });

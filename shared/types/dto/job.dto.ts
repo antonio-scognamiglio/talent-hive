@@ -2,9 +2,9 @@ import type { JobStatus } from "../entities/generated/interfaces";
 import type { BaseListDto } from "./common.dto";
 
 /**
- * DTO for creating a new job
+ * Shared job fields used by both Create and Update DTOs
  */
-export interface CreateJobDto {
+export interface BaseJobFields {
   title: string;
   description: string;
   location?: string;
@@ -14,9 +14,16 @@ export interface CreateJobDto {
 }
 
 /**
+ * DTO for creating a new job
+ */
+export interface CreateJobDto extends BaseJobFields {
+  status?: Extract<JobStatus, "DRAFT" | "PUBLISHED">;
+}
+
+/**
  * DTO for updating an existing job
  */
-export interface UpdateJobDto extends Partial<CreateJobDto> {
+export interface UpdateJobDto extends Partial<BaseJobFields> {
   status?: JobStatus;
 }
 

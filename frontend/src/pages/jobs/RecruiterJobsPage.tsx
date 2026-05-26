@@ -1,5 +1,4 @@
 import { useMemo, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
 import { X, Briefcase } from "lucide-react";
 
 import {
@@ -23,10 +22,11 @@ import { PageHeader, PageContent } from "@/features/shared/components/layout";
 import { Toolbar } from "@/features/shared/components/Toolbar";
 import { ContentCard } from "@/features/shared/components/ContentCard";
 import type { JobWithCount } from "@/features/jobs/types/job.types";
-import type { Job, UpdateJobDto } from "@shared/types";
+import type { Job, CreateJobDto, UpdateJobDto } from "@shared/types";
 import { createJobColumnsConfig } from "@/features/jobs/utils/job-columns.utils";
 import ConfirmationDialog from "@/features/shared/components/ConfirmationDialog";
 import { JobDetailDialog } from "@/features/jobs/components/dialogs/JobDetailDialog";
+import { CreateJobDialog } from "@/features/jobs/components/dialogs/CreateJobDialog";
 import { useStateDialog } from "@/features/shared/hooks/useStateDialog";
 import {
   PAGE_SIZES,
@@ -46,7 +46,7 @@ const BASE_QUERY: PrismaQueryOptions<Job> = {
 };
 
 const RecruiterJobsPage = () => {
-  const dialog = useStateDialog<JobWithCount>(["delete", "detail"]);
+  const dialog = useStateDialog<JobWithCount>(["create", "delete", "detail"]);
 
   const [pageSize, setPageSize] = useState<PageSize>(
     PAGE_SIZES.DEFAULT_PAGE_SIZE,
@@ -73,11 +73,15 @@ const RecruiterJobsPage = () => {
     resetKey,
   } = useJobFilters({ baseQuery: BASE_QUERY });
 
-  const { getJobsPaginatedQuery, updateJobMutation, deleteJobMutation } =
-    useJobs({
-      defaultPrismaQuery: prismaQuery,
-      pageSize,
-    });
+  const {
+    getJobsPaginatedQuery,
+    createJobMutation,
+    updateJobMutation,
+    deleteJobMutation,
+  } = useJobs({
+    defaultPrismaQuery: prismaQuery,
+    pageSize,
+  });
 
   const {
     data,
@@ -132,6 +136,15 @@ const RecruiterJobsPage = () => {
       }
     },
     [updateJobMutation, dialog],
+  );
+
+  // Handler per creazione job
+  const handleCreateJob = useCallback(
+    async (data: CreateJobDto) => {
+      await createJobMutation.mutateAsync(data);
+      dialog.closeDialog();
+    },
+    [createJobMutation, dialog],
   );
 
   // Configurazione Colonne - solo onDelete, view/edit via onRowClick
@@ -204,9 +217,11 @@ const RecruiterJobsPage = () => {
               icon={<X className="h-4 w-4" />}
             />
             <RefreshButton refetch={refetch} isLoading={isFetching} />
-            <Link to="/jobs/new">
-              <PrimaryButton text="Nuovo Annuncio" showIcon />
-            </Link>
+            <PrimaryButton
+              text="Nuovo Annuncio"
+              showIcon
+              onClick={() => dialog.openDialog(null, "create")}
+            />
           </>
         }
       />
@@ -255,6 +270,16 @@ const RecruiterJobsPage = () => {
         </PaginationWrapperStyled>
       </ContentCard>
 
+      {/* Dialog Creazione Job */}
+      {dialog.isDialogOpen("create") && (
+        <CreateJobDialog
+          isOpen={true}
+          onClose={dialog.closeDialog}
+          onCreate={handleCreateJob}
+          isCreating={createJobMutation.isPending}
+        />
+      )}
+
       {/* Dialog Dettaglio Job (View/Edit) */}
       {dialog.isDialogOpen("detail") && dialog.selectedItem && (
         <JobDetailDialog
@@ -267,14 +292,14 @@ const RecruiterJobsPage = () => {
         />
       )}
 
-      {/* Dialog Conferma Eliminazione */}
+      {/* Dialog Conferma Archiviazione */}
       {dialog.isDialogOpen("delete") && dialog.selectedItem && (
         <ConfirmationDialog
           isOpen={true}
           onClose={dialog.closeDialog}
           onConfirm={handleConfirmDelete}
-          title="Elimina annuncio"
-          description={`Sei sicuro di voler eliminare l'annuncio "${dialog.selectedItem.title}"? Questa azione non può essere annullata.`}
+          title="Archivia annuncio"
+          description={`Sei sicuro di voler archiviare l'annuncio "${dialog.selectedItem.title}"? L'annuncio non sarà più visibile ai candidati ma le candidature esistenti verranno mantenute.`}
           isLoading={deleteJobMutation.isPending}
         />
       )}
