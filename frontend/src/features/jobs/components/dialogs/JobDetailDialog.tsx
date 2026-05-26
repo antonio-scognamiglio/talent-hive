@@ -159,10 +159,12 @@ export function JobDetailDialog({
       <div className="flex items-center gap-2">
         {canEdit && (
           <>
-            <Button variant="destructive" size="sm" onClick={handleDeleteClick}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Elimina
-            </Button>
+            {job.status !== "ARCHIVED" && (
+              <Button variant="destructive" size="sm" onClick={handleDeleteClick}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Archivia
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={handleEditClick}>
               <Pencil className="h-4 w-4 mr-2" />
               Modifica
