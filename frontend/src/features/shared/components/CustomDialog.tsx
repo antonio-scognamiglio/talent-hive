@@ -154,6 +154,26 @@ interface CustomDialogProps extends React.PropsWithChildren {
  *      </div>
  *    </CustomDialog>
  *
+ * 5. FORM CON PIU' AZIONI (Enter disabilitato):
+ *    Quando il form ha più bottoni di submit (es. "Crea Bozza" + "Crea e Pubblica"):
+ *    - NON usare la prop `footer` (non supporta >2 bottoni né layout custom come InlineConfirmation)
+ *    - NON usare `type="submit"` su nessun bottone
+ *    - Disabilitare Enter con `onSubmit={(e) => e.preventDefault()}` sul <form>
+ *    - Ogni bottone usa `onClick={form.handleSubmit(callback)}` per validazione automatica
+ *    - L'utente è obbligato a scegliere esplicitamente quale azione eseguire
+ *
+ *    <CustomDialog>
+ *      <Form {...form}>
+ *        <form onSubmit={(e) => e.preventDefault()} className="flex flex-col h-full">
+ *          <div className="flex-1 min-h-0 overflow-y-auto p-4">{campi}</div>
+ *          <div className="shrink-0 border-t p-4">
+ *            <SecondaryButton text="Azione A" onClick={form.handleSubmit(handlerA)} />
+ *            <PrimaryButton text="Azione B" onClick={form.handleSubmit(handlerB)} />
+ *          </div>
+ *        </form>
+ *      </Form>
+ *    </CustomDialog>
+ *
  * IMPORTANTE:
  * - Il dialog NON scrolla mai (overflow-y-hidden)
  * - I children DEVONO gestire il proprio scroll

@@ -1005,25 +1005,77 @@ export function MyForm({ onDirtyChange }: MyFormProps) {
 
 ### Layout Form in Dialog
 
+Scegliere il pattern in base al numero di azioni del form:
+
+#### Singola azione + layout semplice → prop `footer`
+
+Quando il dialog ha un solo bottone primario e non serve layout custom nel footer.
+Enter da tastiera funziona tramite `<form onSubmit>`. Il bottone nel footer usa `form.handleSubmit()` come `onClick`.
+
 ```tsx
-<CustomDialog header={...}>
+<CustomDialog
+  header={{ title: "Crea Entità", description: "..." }}
+  footer={{
+    secondaryButton: { text: "Annulla", onClick: handleCancel },
+    primaryButton: { text: "Crea", onClick: form.handleSubmit(handleSubmit), disabled: isSubmitting },
+  }}
+>
+  <div className="h-full overflow-y-auto p-4">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {/* Form fields */}
+      </form>
+    </Form>
+  </div>
+</CustomDialog>
+```
+
+#### Singola azione + layout complesso → footer nei children (pattern #3)
+
+Quando serve scroll interno, footer custom o styling avanzato. `type="submit"` sul bottone primario, Enter funziona nativamente.
+
+```tsx
+<CustomDialog header={{ title: "Invia Proposta", description: "..." }}>
   <Form {...form}>
-    <form onSubmit={...} className="flex flex-col h-full">
-      {/* Content scrollabile */}
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col h-full">
       <div className="flex-1 min-h-0 overflow-y-auto p-4">
         {/* Form fields */}
       </div>
-      {/* Footer fisso DENTRO form */}
       <div className="shrink-0 border-t p-4 flex justify-end gap-2">
-        <SecondaryButton type="button" onClick={onClose} text="Annulla" />
-        <PrimaryButton type="submit" disabled={isPending} text="Salva" />
+        <SecondaryButton text="Annulla" onClick={onCancel} type="button" />
+        <PrimaryButton type="submit" disabled={isSubmitting} text="Invia" />
       </div>
     </form>
   </Form>
 </CustomDialog>
 ```
 
-**CRITICAL**: Footer DENTRO `<form>` per Enter key submit.
+#### Più azioni → footer nei children + Enter disabilitato
+
+Quando il form ha più bottoni di submit (es. "Crea Bozza" + "Crea e Pubblica"):
+- La prop `footer` NON è adatta (max 2 bottoni, no layout custom come InlineConfirmation)
+- **Nessun** `type="submit"` su nessun bottone
+- Enter disabilitato con `onSubmit={(e) => e.preventDefault()}` — l'utente è obbligato a scegliere esplicitamente
+- Ogni bottone usa `onClick={form.handleSubmit(callback)}` — la validazione è automatica e identica per tutte le azioni
+
+```tsx
+<CustomDialog header={{ title: "Nuovo Annuncio", description: "..." }}>
+  <Form {...form}>
+    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col h-full">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4">
+        {/* Form fields */}
+      </div>
+      <div className="shrink-0 border-t p-4">
+        <SecondaryButton text="Annulla" onClick={handleCancel} />
+        <SecondaryButton text="Crea Bozza" onClick={form.handleSubmit(handleDraft)} />
+        <PrimaryButton text="Crea e Pubblica" onClick={form.handleSubmit(handlePublish)} />
+      </div>
+    </form>
+  </Form>
+</CustomDialog>
+```
+
+**REGOLA**: Footer SEMPRE dentro `<form>` per mantenere la semantica HTML. Per form single-action Enter funziona nativamente; per form multi-action Enter è disabilitato.
 
 ### Dialog Types
 
