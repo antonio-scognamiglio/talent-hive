@@ -48,6 +48,10 @@
 
 ## ✅ Completate
 
+- [x] **Chore: Git History Rewrite**
+  - Riscritto author/committer emails con `git filter-branch` usando noreply email
+  - Force push su remoto completato.
+
 - [x] **Feature: Job Detail Dialog (Recruiter)**
   - [x] Rimuovere Eye e Pencil dalla colonna azioni
   - [x] Aggiungere `onRowClick` alla tabella

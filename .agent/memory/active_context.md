@@ -67,6 +67,11 @@ _Nessuna task in corso_
 
 ## Completate Oggi (Non Ancora Spostate)
 
+- ✅ **Chore: Git Commit History Rewrite**
+  - Impostata globalmente la mail github (noreply)
+  - Riscritto tutto lo storico dei branch con `git filter-branch`
+  - Eseguito `git push --force origin --all`
+
 - [x] **ApplicationDetailDialog - Modular Refactor & Smart UX**
   - **Extracted** `ApplicationDetailView.tsx` (Pure Presentational)
   - **Updated** `UpdateApplicationForm.tsx` to expose values via `onValuesChange`
