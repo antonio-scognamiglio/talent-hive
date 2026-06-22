@@ -11,13 +11,21 @@ import {
 import { Trash } from "lucide-react";
 import { formatDate } from "@/features/shared/utils/date.utils";
 import { getJobStatusVariant, getJobStatusLabel } from "./job-status.utils";
+import { canArchiveJob } from "./job-permissions.utils";
+import type { Role } from "@shared/types";
+
+interface JobColumnsUserContext {
+  id: string;
+  role: Role;
+}
 
 interface CreateJobColumnsConfigOptions {
   /**
-   * Callback per eliminare un job. Se non fornito, il bottone delete non viene mostrato.
+   * Callback per archiviare un job. Il bottone è mostrato solo se canArchiveJob(job, user).
    * View e Edit sono gestiti tramite onRowClick → JobDetailDialog.
    */
   onDelete?: (job: JobWithCount) => void;
+  user?: JobColumnsUserContext | null;
 }
 
 /**
@@ -29,6 +37,7 @@ interface CreateJobColumnsConfigOptions {
  */
 export function createJobColumnsConfig({
   onDelete,
+  user,
 }: CreateJobColumnsConfigOptions): ColumnConfig<JobWithCount>[] {
   // Helper per il badge status
   const getStatusBadge = (status: JobWithCount["status"]) => {
@@ -87,15 +96,15 @@ export function createJobColumnsConfig({
     },
   ];
 
-  // Aggiungi colonna azioni solo se onDelete è fornito
-  if (onDelete) {
+  // Aggiungi colonna azioni solo se onDelete e user sono forniti
+  if (onDelete && user) {
     columns.push({
       key: "actions",
       header: "",
       width: { default: 1 },
       align: "right",
       cell: (job) =>
-        job.status === "ARCHIVED" ? null : (
+        !canArchiveJob(job, user) ? null : (
           <div className="flex items-center justify-end gap-1">
             <TooltipProvider>
               <Tooltip>

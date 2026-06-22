@@ -19,7 +19,11 @@ import {
   getJobStatusVariant,
   getJobStatusLabel,
 } from "@/features/jobs/utils/job-status.utils";
-import { canEditJob } from "@/features/jobs/utils/job-permissions.utils";
+import {
+  canArchiveJob,
+  canEditJob,
+} from "@/features/jobs/utils/job-permissions.utils";
+import { InlineConfirmationDanger } from "@/features/shared/components/inline-actions";
 import { formatDate } from "@/features/shared/utils/date.utils";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 
@@ -33,8 +37,9 @@ interface JobDetailDialogProps {
     id: string,
     data: ReturnType<typeof toUpdateJobDto>,
   ) => Promise<void>;
-  onDelete: (job: JobWithCount) => void;
+  onArchive: (id: string) => Promise<void>;
   isUpdating?: boolean;
+  isArchiving?: boolean;
 }
 
 export function JobDetailDialog({
@@ -42,16 +47,18 @@ export function JobDetailDialog({
   onClose,
   job,
   onUpdate,
-  onDelete,
+  onArchive,
   isUpdating = false,
+  isArchiving = false,
 }: JobDetailDialogProps) {
   const { user } = useAuthContext();
 
   const [mode, setMode] = useState<DialogMode>("view");
   const [isFormDirty, setIsFormDirty] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
-  // Check permessi usando utility centralizzata
   const canEdit = user ? canEditJob(job, user) : false;
+  const canArchive = user ? canArchiveJob(job, user) : false;
 
   const handleEditClick = useCallback(() => {
     setMode("edit");
@@ -72,13 +79,23 @@ export function JobDetailDialog({
     [job.id, onUpdate],
   );
 
-  const handleDeleteClick = useCallback(() => {
-    onDelete(job);
-  }, [job, onDelete]);
+  const handleArchiveClick = useCallback(() => {
+    setShowArchiveConfirm(true);
+  }, []);
+
+  const handleCancelArchive = useCallback(() => {
+    setShowArchiveConfirm(false);
+  }, []);
+
+  const handleArchiveConfirm = useCallback(async () => {
+    await onArchive(job.id);
+    setShowArchiveConfirm(false);
+  }, [job.id, onArchive]);
 
   const handleClose = useCallback(() => {
     setMode("view");
     setIsFormDirty(false);
+    setShowArchiveConfirm(false);
     onClose();
   }, [onClose]);
 
@@ -154,22 +171,35 @@ export function JobDetailDialog({
   );
 
   // Footer per View Mode
-  const viewFooter = (
+  const viewFooter = showArchiveConfirm ? (
+    <div className="w-full">
+      <InlineConfirmationDanger
+      isVisible={true}
+      onCancel={handleCancelArchive}
+      onConfirm={handleArchiveConfirm}
+      title="Archivia annuncio"
+      description="L'annuncio non sarà più visibile ai candidati ma le candidature esistenti verranno mantenute."
+      confirmButtonText="Archivia"
+      cancelButtonText="Annulla"
+      isLoading={isArchiving}
+      icon={Trash2}
+      buttonVariant="destructive"
+      />
+    </div>
+  ) : (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
+        {canArchive && (
+          <Button variant="destructive" size="sm" onClick={handleArchiveClick}>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Archivia
+          </Button>
+        )}
         {canEdit && (
-          <>
-            {job.status !== "ARCHIVED" && (
-              <Button variant="destructive" size="sm" onClick={handleDeleteClick}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Archivia
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={handleEditClick}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Modifica
-            </Button>
-          </>
+          <Button variant="outline" size="sm" onClick={handleEditClick}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Modifica
+          </Button>
         )}
       </div>
       <Button variant="default" size="sm" asChild>

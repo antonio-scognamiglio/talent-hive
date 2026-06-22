@@ -28,6 +28,7 @@ import ConfirmationDialog from "@/features/shared/components/ConfirmationDialog"
 import { JobDetailDialog } from "@/features/jobs/components/dialogs/JobDetailDialog";
 import { CreateJobDialog } from "@/features/jobs/components/dialogs/CreateJobDialog";
 import { useStateDialog } from "@/features/shared/hooks/useStateDialog";
+import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 import {
   PAGE_SIZES,
   type PageSize,
@@ -46,6 +47,7 @@ const BASE_QUERY: PrismaQueryOptions<Job> = {
 };
 
 const RecruiterJobsPage = () => {
+  const { user } = useAuthContext();
   const dialog = useStateDialog<JobWithCount>(["create", "delete", "detail"]);
 
   const [pageSize, setPageSize] = useState<PageSize>(
@@ -106,7 +108,7 @@ const RecruiterJobsPage = () => {
     [dialog],
   );
 
-  // Handler per delete (sia da tabella che da dialog)
+  // Handler per archiviazione dalla tabella (dialog di conferma separato)
   const handleDeleteClick = useCallback(
     (job: JobWithCount) => {
       dialog.openDialog(job, "delete");
@@ -120,6 +122,14 @@ const RecruiterJobsPage = () => {
       dialog.closeDialog();
     }
   };
+
+  const handleArchiveJob = useCallback(
+    async (id: string) => {
+      await deleteJobMutation.mutateAsync(id);
+      dialog.closeDialog();
+    },
+    [deleteJobMutation, dialog],
+  );
 
   // Handler per update dal dialog (riceve già il DTO dal form)
   // Usa refreshDialogData per aggiornare i dati nel dialog con la response
@@ -152,8 +162,9 @@ const RecruiterJobsPage = () => {
     () =>
       createJobColumnsConfig({
         onDelete: (job) => handleDeleteClick(job),
+        user,
       }),
-    [handleDeleteClick],
+    [handleDeleteClick, user],
   );
 
   return (
@@ -287,8 +298,9 @@ const RecruiterJobsPage = () => {
           onClose={dialog.closeDialog}
           job={dialog.selectedItem}
           onUpdate={handleUpdateJob}
-          onDelete={handleDeleteClick}
+          onArchive={handleArchiveJob}
           isUpdating={updateJobMutation.isPending}
+          isArchiving={deleteJobMutation.isPending}
         />
       )}
 
