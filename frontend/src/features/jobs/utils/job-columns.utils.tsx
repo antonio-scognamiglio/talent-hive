@@ -26,6 +26,11 @@ interface CreateJobColumnsConfigOptions {
    */
   onDelete?: (job: JobWithCount) => void;
   user?: JobColumnsUserContext | null;
+  /**
+   * Mostra la colonna "Creato da" con nome e cognome del recruiter owner.
+   * Usato nella vista admin per distinguere gli annunci tra recruiter diversi.
+   */
+  showCreatedBy?: boolean;
 }
 
 /**
@@ -38,6 +43,7 @@ interface CreateJobColumnsConfigOptions {
 export function createJobColumnsConfig({
   onDelete,
   user,
+  showCreatedBy,
 }: CreateJobColumnsConfigOptions): ColumnConfig<JobWithCount>[] {
   // Helper per il badge status
   const getStatusBadge = (status: JobWithCount["status"]) => {
@@ -72,6 +78,23 @@ export function createJobColumnsConfig({
       width: { default: 2 },
       cell: (job) => getStatusBadge(job.status),
     },
+    ...(showCreatedBy
+      ? [
+          {
+            key: "createdBy",
+            header: "Creato da",
+            width: { default: 2 },
+            cell: (job: JobWithCount) =>
+              job.createdBy ? (
+                <span className="text-sm text-muted-foreground">
+                  {job.createdBy.firstName} {job.createdBy.lastName}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              ),
+          } satisfies ColumnConfig<JobWithCount>,
+        ]
+      : []),
     {
       key: "applicationsCount",
       header: "Candidature",
