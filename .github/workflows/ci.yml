@@ -54,15 +54,21 @@ jobs:
       - name: Typecheck frontend
         run: bun run typecheck:frontend
 
-      # --- 5. Typecheck backend ---
+      # --- 5. Genera il client Prisma (obbligatorio in CI: VM pulita, niente generate locale) ---
+      # Senza questo step, @prisma/client manca e il typecheck backend fallisce
+      - name: Generate Prisma client
+        working-directory: backend
+        run: bunx prisma generate
+
+      # --- 6. Typecheck backend ---
       - name: Typecheck backend
         run: bun run typecheck:backend
 
-      # --- 6. ESLint sul frontend ---
+      # --- 7. ESLint sul frontend ---
       - name: Lint frontend
         run: bun run --filter frontend lint
 
-      # --- 7. Build di produzione frontend (opzionale ma utile in CI) ---
+      # --- 8. Build di produzione frontend (opzionale ma utile in CI) ---
       # Verifica che Vite riesca a compilare il bundle; non fa deploy
       - name: Build frontend
         run: bun run --filter frontend build
